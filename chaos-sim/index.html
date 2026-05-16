@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ChaosTCG 一人回し</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <h1>ChaosTCG Sim</h1>
+  <nav><a href="recipe.html">レシピDB</a></nav>
+</header>
+
+<div class="container">
+  <!-- Deck select -->
+  <div id="deck-select">
+    <button onclick="loadFromStorage()">localStorageから読込</button>
+    <button onclick="loadSampleDeck()">サンプルデッキ</button>
+  </div>
+
+  <!-- Phase bar -->
+  <div id="phase-bar">
+    <span class="phase" data-phase="beginning">ビギニング</span>
+    <span class="phase" data-phase="main">メイン</span>
+    <span class="phase" data-phase="battle">バトル</span>
+    <span class="phase" data-phase="end">エンド</span>
+    <span id="turn-count">T0</span>
+  </div>
+
+  <!-- Field -->
+  <div id="field">
+    <div id="deck-area">
+      <span class="zone-label">デッキ</span>
+      <div class="slot" id="deck-slot" onclick="game.peekDeck()">
+        <span class="zone-count" id="deck-count">0</span>
+      </div>
+      <span class="zone-label">EX</span>
+      <div class="slot" id="extra-slot">
+        <span class="zone-count" id="extra-count">0</span>
+      </div>
+    </div>
+
+    <div id="arena">
+      <div id="partner-row">
+        <div class="slot partner" data-area="partner" onclick="game.clickSlot('partner')"></div>
+      </div>
+      <div class="slot" data-area="back-l" onclick="game.clickSlot('back-l')"><span>後衛L</span></div>
+      <div class="slot" data-area="back-r" onclick="game.clickSlot('back-r')"><span>後衛R</span></div>
+      <div class="slot" data-area="front-l" onclick="game.clickSlot('front-l')"><span>前衛L</span></div>
+      <div class="slot" data-area="front-r" onclick="game.clickSlot('front-r')"><span>前衛R</span></div>
+    </div>
+
+    <div id="discard-area">
+      <span class="zone-label">控え室</span>
+      <div class="slot" id="discard-slot" onclick="game.showDiscard()">
+        <span class="zone-count" id="discard-count">0</span>
+      </div>
+      <span class="zone-label">バックヤード</span>
+      <div class="slot" id="backyard-slot">
+        <span class="zone-count" id="backyard-count">0</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hand -->
+  <div id="hand-area">
+    <h3>手札 (<span id="hand-count">0</span>)</h3>
+    <div id="hand"></div>
+  </div>
+
+  <!-- Actions -->
+  <div id="actions">
+    <button onclick="game.nextPhase()">次フェイズ ▶</button>
+    <button onclick="game.draw()">ドロー</button>
+    <button onclick="game.mulligan()" id="btn-mulligan">マリガン</button>
+    <button onclick="game.levelUp()" id="btn-levelup">レベルアップ</button>
+    <button onclick="game.attack()" id="btn-attack">アタック</button>
+    <button onclick="game.dealDamage()" id="btn-damage">ダメージ</button>
+    <button onclick="game.shuffleDeck()">シャッフル</button>
+    <button onclick="game.reset()">リセット</button>
+  </div>
+
+  <!-- Log -->
+  <div id="log-area">
+    <h3>ログ</h3>
+    <div id="log"></div>
+  </div>
+</div>
+
+<!-- Modal -->
+<div class="modal" id="modal">
+  <div class="modal-content" id="modal-content"></div>
+</div>
+
+<script src="game.js"></script>
+</body>
+</html>
