@@ -1,363 +1,421 @@
-// ChaosTCG 一人回しシミュレータ
 'use strict';
 
 let cardMap = {};
-fetch('card_map.json').then(r => r.json()).then(d => { cardMap = d; });
+fetch('card_map.json').then(r => r.json()).then(d => { cardMap = d; }).catch(() => {});
 
-const PHASES = ['beginning', 'main', 'battle', 'end'];
-const AREAS = ['partner', 'front-l', 'front-r', 'back-l', 'back-r'];
+const SLOTS = ['partner', 'front-l', 'front-r', 'back-l', 'back-r'];
+const ZONES = ['deck', 'extra', 'hand', 'discard', 'backyard'];
+
+// --- State ---
+const state = [null, null]; // [p0, p1]
+function newPlayerState() {
+  return { deck: [], extra: [], hand: [], discard: [], backyard: [], slots: { partner: null, 'front-l': null, 'front-r': null, 'back-l': null, 'back-r': null } };
+}
 
 const game = {
-  deck: [], extra: [], hand: [], discard: [], backyard: [],
-  field: { partner: null, 'front-l': null, 'front-r': null, 'back-l': null, 'back-r': null },
-  partnerName: '',
-  phase: -1, turn: 0,
-  mulliganUsed: false, levelUpUsed: false, friendPlayed: false,
-  selectedHand: -1,
-
-  // --- Init ---
-  loadDeck(cards, extraCards) {
-    this.reset();
-    // Find partner card (type 'パートナー' or first card)
-    let partnerIdx = cards.findIndex(c => c.type === 'partner');
-    if (partnerIdx < 0) partnerIdx = 0;
-    const partnerCard = cards.splice(partnerIdx, 1)[0];
-    this.partnerName = partnerCard.name;
-    this.field.partner = { ...partnerCard, state: 'stand', faceUp: true, level: 0, damage: 0, levelCards: [] };
-    this.extra = (extraCards || []).map(c => ({ ...c }));
-    this.deck = this.shuffle([...cards]);
-    // Draw 5
-    for (let i = 0; i < 5; i++) this.drawOne(true);
-    this.turn = 1;
-    this.phase = 0;
-    this.log('ゲーム開始。パートナー: ' + this.partnerName, 'phase');
-    this.render();
+  draw(p) {
+    const s = state[p];
+    if (!s || s.deck.length === 0) { log('デッキが空です', 'damage'); return; }
+    s.hand.push(s.deck.pop());
+    log(`P${p+1} ドロー`);
+    render();
   },
 
-  reset() {
-    this.deck = []; this.extra = []; this.hand = []; this.discard = []; this.backyard = [];
-    this.field = { partner: null, 'front-l': null, 'front-r': null, 'back-l': null, 'back-r': null };
-    this.partnerName = ''; this.phase = -1; this.turn = 0;
-    this.mulliganUsed = false; this.levelUpUsed = false; this.friendPlayed = false;
-    this.selectedHand = -1;
-    document.getElementById('log').innerHTML = '';
-    this.render();
+  mulligan(p) {
+    const s = state[p];
+    if (!s) return;
+    const n = s.hand.length;
+    s.deck.push(...s.hand);
+    s.hand = [];
+    shuffle(s.deck);
+    for (let i = 0; i < n; i++) s.hand.push(s.deck.pop());
+    log(`P${p+1} マリガン (${n}枚)`);
+    render();
   },
 
-  // --- Phase progression ---
-  nextPhase() {
-    if (this.phase < 0) return;
-    this.phase++;
-    if (this.phase >= PHASES.length) {
-      // New turn
-      this.turn++;
-      this.phase = 0;
-      this.levelUpUsed = false;
-      this.friendPlayed = false;
-      this.log(`── ターン ${this.turn} ──`, 'phase');
-      this.doBeginning();
-    } else if (PHASES[this.phase] === 'beginning') {
-      this.doBeginning();
-    } else if (PHASES[this.phase] === 'main') {
-      this.log('メインフェイズ', 'phase');
-    } else if (PHASES[this.phase] === 'battle') {
-      this.log('バトルフェイズ', 'phase');
-    } else if (PHASES[this.phase] === 'end') {
-      this.log('エンドフェイズ', 'phase');
+  shuffle(p) {
+    if (!state[p]) return;
+    shuffle(state[p].deck);
+    log(`P${p+1} シャッフル`);
+    render();
+  },
+
+  standAll(p) {
+    if (!state[p]) return;
+    for (const sl of SLOTS) {
+      const c = state[p].slots[sl];
+      if (c && c.state !== 'stand') { c.state = 'stand'; }
     }
-    this.render();
+    log(`P${p+1} 全スタンド`);
+    render();
   },
 
-  doBeginning() {
-    this.log('ビギニングフェイズ', 'phase');
-    // Recovery: stand all
-    for (const area of AREAS) {
-      const c = this.field[area];
-      if (!c) continue;
-      if (c.state === 'rest') { c.state = 'stand'; this.log(`${c.name} スタンド`); }
-      else if (c.state === 'reverse') { c.state = 'rest'; this.log(`${c.name} レスト状態に`); }
-    }
-    // Draw
-    if (this.deck.length > 0) {
-      this.drawOne();
-    } else {
-      this.log('デッキ切れ！敗北', 'damage');
-    }
-  },
-
-  // --- Actions ---
-  draw() { this.drawOne(); this.render(); },
-
-  drawOne(silent) {
-    if (this.deck.length === 0) { if (!silent) this.log('デッキが空です', 'damage'); return null; }
-    const c = this.deck.pop();
-    this.hand.push(c);
-    if (!silent) this.log(`ドロー: ${c.name}`);
-    this.render();
-    return c;
-  },
-
-  mulligan() {
-    if (this.mulliganUsed) { this.log('マリガン済み'); return; }
-    this.mulliganUsed = true;
-    const count = this.hand.length;
-    this.deck.push(...this.hand);
-    this.hand = [];
-    this.deck = this.shuffle(this.deck);
-    for (let i = 0; i < count; i++) this.drawOne(true);
-    this.log(`マリガン: ${count}枚引き直し`);
-    this.render();
-  },
-
-  levelUp() {
-    if (this.levelUpUsed) { this.log('このターンはレベルアップ済み'); return; }
-    if (this.selectedHand < 0) { this.log('手札からレベルアップに使うカードを選択してください'); return; }
-    const card = this.hand[this.selectedHand];
-    const partner = this.field.partner;
-    if (!partner) { this.log('パートナーがいません'); return; }
-    if (card.name !== partner.name) { this.log('パートナーと同名カードが必要です'); return; }
-    // Perform level up
-    this.hand.splice(this.selectedHand, 1);
-    this.selectedHand = -1;
-    partner.level++;
-    partner.levelCards.push(card);
-    partner.faceUp = true;
-    partner.state = 'stand';
-    partner.damage = 0;
-    this.levelUpUsed = true;
-    this.log(`レベルアップ! ${partner.name} Lv.${partner.level}`, 'cancel');
-    this.render();
-  },
-
-  attack() {
-    if (PHASES[this.phase] !== 'battle') { this.log('バトルフェイズ中のみアタック可能'); return; }
-    // Pick attacker from field
-    const attackers = AREAS.filter(a => {
-      const c = this.field[a];
-      return c && c.faceUp && c.state === 'stand';
-    });
-    if (attackers.length === 0) { this.log('アタック可能なキャラがいません'); return; }
-    this.showPicker('アタックキャラ選択', attackers.map(a => this.field[a].name + ' (' + a + ')'), idx => {
-      const area = attackers[idx];
-      const c = this.field[area];
-      c.state = 'rest';
-      this.log(`${c.name} でアタック宣言`);
-      if (area === 'partner') {
-        this.drawOne();
-        this.log('アタックドロー');
-      }
-      this.render();
-    });
-  },
-
-  dealDamage() {
-    const amt = parseInt(prompt('ダメージ量を入力:'), 10);
-    if (!amt || amt <= 0) return;
-    this.processDamage(amt);
-    this.render();
-  },
-
-  processDamage(amount) {
-    this.log(`${amount}ダメージ処理開始`, 'damage');
-    let remaining = amount;
+  dealDamage(p) {
+    const s = state[p];
+    if (!s) return;
+    const n = parseInt(document.getElementById('dmg-n').textContent, 10);
+    if (n <= 0) return;
+    let remaining = n;
+    log(`P${p+1} に${n}ダメージ`, 'damage');
     while (remaining > 0) {
-      if (this.deck.length === 0) {
-        this.log('デッキ切れ！敗北', 'damage');
-        return;
-      }
-      const card = this.deck.pop();
-      // Check partner cancel
-      if (card.name === this.partnerName) {
-        this.log(`★ ${card.name} めくれた → パートナーキャンセル!`, 'cancel');
-        // Auto level up
-        const partner = this.field.partner;
-        if (partner) {
-          partner.level++;
-          partner.levelCards.push(card);
-          partner.faceUp = true;
-          partner.state = 'stand';
-          partner.damage = 0;
-          this.log(`オートレベルアップ Lv.${partner.level} 残ダメージ${remaining - 1}キャンセル`, 'cancel');
-        }
+      if (s.deck.length === 0) { log('デッキ切れ！', 'damage'); break; }
+      const card = s.deck.pop();
+      const partner = s.slots.partner;
+      if (partner && card.name === partner.name) {
+        log(`★ ${card.name} → パートナーキャンセル!`, 'cancel');
+        partner.level = (partner.level || 0) + 1;
+        partner.state = 'stand';
+        partner.damage = 0;
+        partner.faceUp = true;
+        partner.levelCards = partner.levelCards || [];
+        partner.levelCards.push(card);
         remaining = 0;
       } else {
-        this.discard.push(card);
+        s.discard.push(card);
         remaining--;
-        this.log(`${card.name} → 控え室 (残${remaining})`);
       }
     }
+    render();
   },
 
-  shuffleDeck() {
-    this.deck = this.shuffle(this.deck);
-    this.log('デッキシャッフル');
-    this.render();
+  showZone(p, zone) {
+    const s = state[p];
+    if (!s) return;
+    const cards = s[zone] || [];
+    if (cards.length === 0) { log(`P${p+1} ${zone} は空`); return; }
+    openZonePanel(`P${p+1} ${zone} (${cards.length})`, cards, p, zone);
   },
 
-  // --- Field interaction ---
-  clickSlot(area) {
-    if (this.selectedHand >= 0) {
-      // Place card from hand
-      const card = this.hand[this.selectedHand];
-      if (area === 'partner') { this.log('パートナーエリアには配置できません'); return; }
-      if (this.field[area]) {
-        // Swap to discard
-        this.discard.push(this.field[area]);
-        this.log(`${this.field[area].name} → 控え室`);
-      }
-      this.field[area] = { ...card, state: 'stand', faceUp: true, level: 0, damage: 0, levelCards: [] };
-      this.hand.splice(this.selectedHand, 1);
-      this.selectedHand = -1;
-      this.log(`${card.name} → ${area}`);
-      this.render();
+  // Move card between zones/slots
+  moveCard(fromP, fromZone, fromIdx, toP, toZone, toIdx) {
+    const src = getContainer(fromP, fromZone);
+    const dst = getContainer(toP, toZone);
+    if (!src || !dst) return;
+
+    let card;
+    if (Array.isArray(src)) {
+      card = src.splice(fromIdx, 1)[0];
     } else {
-      // Toggle state
-      const c = this.field[area];
-      if (!c) return;
-      if (c.state === 'stand') c.state = 'rest';
-      else if (c.state === 'rest') c.state = 'reverse';
-      else c.state = 'stand';
-      this.render();
+      // from slot
+      card = src[fromZone];
+      src[fromZone] = null;
     }
-  },
+    if (!card) return;
 
-  peekDeck() {
-    if (this.deck.length === 0) return;
-    const top = this.deck[this.deck.length - 1];
-    this.showModal(`<h3>デッキトップ</h3><p>${top.name} (${top.number})</p><button onclick="game.closeModal()">閉じる</button>`);
-  },
-
-  showDiscard() {
-    if (this.discard.length === 0) { this.log('控え室は空です'); return; }
-    let html = '<h3>控え室 (' + this.discard.length + ')</h3><div class="card-list">';
-    this.discard.forEach(c => { html += `<div class="pick">${c.name}</div>`; });
-    html += '</div><button onclick="game.closeModal()">閉じる</button>';
-    this.showModal(html);
-  },
-
-  // --- Hand selection ---
-  selectHand(idx) {
-    this.selectedHand = this.selectedHand === idx ? -1 : idx;
-    this.render();
-  },
-
-  // --- UI helpers ---
-  showPicker(title, options, callback) {
-    let html = `<h3>${title}</h3><div class="card-list">`;
-    options.forEach((o, i) => { html += `<div class="pick" onclick="game._pickerCb(${i})">${o}</div>`; });
-    html += '</div><button onclick="game.closeModal()">キャンセル</button>';
-    this._pickerCallback = callback;
-    this.showModal(html);
-  },
-  _pickerCb(idx) { this.closeModal(); if (this._pickerCallback) this._pickerCallback(idx); },
-
-  showModal(html) {
-    document.getElementById('modal-content').innerHTML = html;
-    document.getElementById('modal').classList.add('show');
-  },
-  closeModal() { document.getElementById('modal').classList.remove('show'); },
-
-  log(msg, cls) {
-    const el = document.getElementById('log');
-    el.innerHTML = `<div class="log-entry ${cls || ''}">${msg}</div>` + el.innerHTML;
-  },
-
-  // --- Render ---
-  render() {
-    // Phase bar
-    document.querySelectorAll('#phase-bar .phase').forEach(el => {
-      el.classList.toggle('active', el.dataset.phase === PHASES[this.phase]);
-    });
-    document.getElementById('turn-count').textContent = 'T' + this.turn;
-
-    // Zones
-    document.getElementById('deck-count').textContent = this.deck.length;
-    document.getElementById('extra-count').textContent = this.extra.length;
-    document.getElementById('discard-count').textContent = this.discard.length;
-    document.getElementById('backyard-count').textContent = this.backyard.length;
-
-    // Field slots
-    for (const area of AREAS) {
-      const slot = document.querySelector(`.slot[data-area="${area}"]`);
-      const c = this.field[area];
-      slot.className = 'slot' + (area === 'partner' ? ' partner' : '');
-      if (c) {
-        slot.classList.add('has-card');
-        if (c.state === 'rest') slot.classList.add('rest');
-        if (c.state === 'reverse' || !c.faceUp) slot.classList.add('reverse');
-        const cm = cardMap[c.number] || {};
-        let inner = '';
-        if (cm.image) inner += `<img class="card-img" src="${cm.image}" alt="${c.name}">`;
-        else inner += `<span class="card-name">${c.name}</span>`;
-        if (c.level > 0) inner += `<span class="level-badge">Lv${c.level}</span>`;
-        if (c.damage > 0) inner += `<span class="dmg-badge">${c.damage}</span>`;
-        slot.innerHTML = inner;
-      } else {
-        slot.innerHTML = `<span>${area === 'partner' ? 'パートナー' : area}</span>`;
+    if (Array.isArray(dst)) {
+      dst.push(card);
+    } else {
+      // to slot: if occupied, send existing to discard
+      if (dst[toZone]) {
+        state[toP].discard.push(dst[toZone]);
       }
+      card.state = 'stand';
+      card.faceUp = true;
+      dst[toZone] = card;
     }
-
-    // Hand
-    const handEl = document.getElementById('hand');
-    document.getElementById('hand-count').textContent = this.hand.length;
-    handEl.innerHTML = this.hand.map((c, i) => {
-      const cm = cardMap[c.number] || {};
-      const sel = i === this.selectedHand ? ' selected' : '';
-      const img = cm.image ? `<img src="${cm.image}" alt="${c.name}">` : c.name;
-      return `<div class="hand-card${sel}" onclick="game.selectHand(${i})">${img}</div>`;
-    }).join('');
-  },
-
-  // --- Utility ---
-  shuffle(arr) {
-    for (let i = arr.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [arr[i], arr[j]] = [arr[j], arr[i]];
-    }
-    return arr;
+    render();
   }
 };
 
-// --- Deck loading ---
-function loadFromStorage() {
-  const data = localStorage.getItem('chaos-deck');
-  if (!data) { game.log('localStorageにデッキがありません'); return; }
-  const deck = JSON.parse(data);
-  const cards = [];
-  const extra = [];
-  deck.cards.forEach(entry => {
-    for (let i = 0; i < entry.count; i++) {
-      const c = { number: entry.number, name: entry.name || entry.number, type: entry.type || 'chara' };
-      if (c.type === 'extra') extra.push(c);
-      else cards.push(c);
-    }
-  });
-  if (deck.partner) {
-    const pi = cards.findIndex(c => c.number === deck.partner);
-    if (pi >= 0) cards[pi].type = 'partner';
-  }
-  game.loadDeck(cards, extra);
+function getContainer(p, zone) {
+  if (!state[p]) return null;
+  if (SLOTS.includes(zone)) return state[p].slots;
+  return state[p][zone];
 }
 
-function loadSampleDeck() {
-  // Load from recipes.json first entry
-  fetch('recipes.json').then(r => r.json()).then(recipes => {
-    if (!recipes.length) { game.log('レシピなし'); return; }
-    const r = recipes[0];
+// --- Deck loading ---
+function getDecks() { return JSON.parse(localStorage.getItem('chaos-decks') || '{}'); }
+
+function populateDeckSelects() {
+  const decks = getDecks();
+  const names = Object.keys(decks);
+  for (let i = 0; i < 2; i++) {
+    const sel = document.getElementById('deck-select-' + i);
+    sel.innerHTML = names.map(n => `<option value="${n}">${n}</option>`).join('');
+  }
+}
+
+function startGame() {
+  const decks = getDecks();
+  for (let p = 0; p < 2; p++) {
+    const name = document.getElementById('deck-select-' + p).value;
+    const deck = decks[name];
+    if (!deck) { log('デッキが見つかりません: ' + name); return; }
+    state[p] = newPlayerState();
     const cards = [];
-    r.cards.forEach(entry => {
-      for (let i = 0; i < entry.count; i++) {
-        cards.push({ number: entry.number, name: (cardMap[entry.number] || {}).name || entry.number, type: 'chara' });
+    deck.forEach(entry => {
+      const num = entry.number || entry.n || entry;
+      const cm = cardMap[num] || {};
+      for (let i = 0; i < (entry.count || entry.num || 1); i++) {
+        cards.push({ number: num, name: cm.name || num, image: cm.image || '', state: 'stand', faceUp: true, level: 0, damage: 0, levelCards: [] });
       }
     });
-    // Set partner
-    if (r.partner) {
-      const pi = cards.findIndex(c => c.number === r.partner);
-      if (pi >= 0) cards[pi].type = 'partner';
+    // Find partner
+    const pi = cards.findIndex(c => {
+      const num = c.number.toUpperCase();
+      return num.includes('-P') || num.includes('PR');
+    });
+    if (pi >= 0) {
+      state[p].slots.partner = cards.splice(pi, 1)[0];
+    } else if (cards.length > 0) {
+      state[p].slots.partner = cards.splice(0, 1)[0];
     }
-    game.loadDeck(cards, []);
+    shuffle(cards);
+    state[p].deck = cards;
+    // Draw 5
+    for (let i = 0; i < 5 && state[p].deck.length > 0; i++) {
+      state[p].hand.push(state[p].deck.pop());
+    }
+  }
+  document.getElementById('deck-modal').style.display = 'none';
+  log('ゲーム開始');
+  render();
+}
+
+function resetGame() {
+  state[0] = null; state[1] = null;
+  document.getElementById('deck-modal').style.display = 'flex';
+  populateDeckSelects();
+  render();
+}
+
+// --- Import from recipe.html localStorage ---
+(function checkImport() {
+  const raw = localStorage.getItem('chaos-deck');
+  if (raw) {
+    try {
+      const d = JSON.parse(raw);
+      const decks = getDecks();
+      const name = d.name || d.partner || 'インポート';
+      decks[name] = d.cards || [];
+      localStorage.setItem('chaos-decks', JSON.stringify(decks));
+    } catch(e) {}
+  }
+})();
+
+// --- Render ---
+function render() {
+  for (let p = 0; p < 2; p++) {
+    const s = state[p];
+    document.getElementById(`p${p}-deck-count`).textContent = s ? s.deck.length : 0;
+    document.getElementById(`p${p}-extra-count`).textContent = s ? s.extra.length : 0;
+    document.getElementById(`p${p}-discard-count`).textContent = s ? s.discard.length : 0;
+    document.getElementById(`p${p}-backyard-count`).textContent = s ? s.backyard.length : 0;
+    document.getElementById(`p${p}-hand-count`).textContent = s ? s.hand.length : 0;
+
+    // Hand
+    const handEl = document.getElementById(`p${p}-hand-cards`);
+    handEl.innerHTML = s ? s.hand.map((c, i) => makeCardHtml(c, p, 'hand', i)).join('') : '';
+
+    // Slots
+    for (const sl of SLOTS) {
+      const slotEl = document.getElementById(`p${p}-${sl}`);
+      const c = s ? s.slots[sl] : null;
+      if (c) {
+        slotEl.innerHTML = makeCardHtml(c, p, sl, 0);
+      } else {
+        slotEl.innerHTML = '';
+      }
+    }
+  }
+  setupDragDrop();
+}
+
+function makeCardHtml(card, p, zone, idx) {
+  const cls = ['card'];
+  if (!card.faceUp) cls.push('face-down');
+  if (card.state === 'rest') cls.push('rest');
+  if (card.state === 'reverse') cls.push('reverse');
+  const cm = cardMap[card.number] || {};
+  const img = card.image || cm.image || '';
+  let inner = '';
+  if (card.faceUp && img) inner += `<img class="card-img" src="${img}" alt="${card.name}" loading="lazy">`;
+  if (card.faceUp && !img) inner += `<span class="card-name">${card.name}</span>`;
+  if (card.level > 0) inner += `<span class="level-badge">Lv${card.level}</span>`;
+  if (card.damage > 0) inner += `<span class="dmg-badge">${card.damage}</span>`;
+  return `<div class="${cls.join(' ')}" draggable="true" data-p="${p}" data-zone="${zone}" data-idx="${idx}" oncontextmenu="cardMenu(event,${p},'${zone}',${idx})">${inner}</div>`;
+}
+
+// --- Drag & Drop ---
+let dragData = null;
+
+function setupDragDrop() {
+  document.querySelectorAll('.card[draggable]').forEach(el => {
+    el.addEventListener('dragstart', e => {
+      dragData = { p: +el.dataset.p, zone: el.dataset.zone, idx: +el.dataset.idx };
+      el.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+    });
+    el.addEventListener('dragend', e => { el.classList.remove('dragging'); dragData = null; });
+  });
+
+  // Drop targets: slots and zones
+  document.querySelectorAll('.slot[data-p]').forEach(el => {
+    el.addEventListener('dragover', e => { e.preventDefault(); el.classList.add('drag-over'); });
+    el.addEventListener('dragleave', () => el.classList.remove('drag-over'));
+    el.addEventListener('drop', e => {
+      e.preventDefault(); el.classList.remove('drag-over');
+      if (!dragData) return;
+      const toP = +el.dataset.p, toSlot = el.dataset.slot;
+      moveFromDrag(toP, toSlot);
+    });
+  });
+
+  document.querySelectorAll('.zone[data-p]').forEach(el => {
+    el.addEventListener('dragover', e => { e.preventDefault(); el.classList.add('drag-over'); });
+    el.addEventListener('dragleave', () => el.classList.remove('drag-over'));
+    el.addEventListener('drop', e => {
+      e.preventDefault(); el.classList.remove('drag-over');
+      if (!dragData) return;
+      const toP = +el.dataset.p, toZone = el.dataset.zone;
+      moveFromDrag(toP, toZone);
+    });
+  });
+
+  // Hand areas as drop targets
+  document.querySelectorAll('.hand-area').forEach(el => {
+    const p = el.id === 'p0-hand-area' ? 0 : 1;
+    el.addEventListener('dragover', e => { e.preventDefault(); el.style.borderColor = '#4ad4a0'; });
+    el.addEventListener('dragleave', () => el.style.borderColor = '');
+    el.addEventListener('drop', e => {
+      e.preventDefault(); el.style.borderColor = '';
+      if (!dragData) return;
+      moveFromDrag(p, 'hand');
+    });
   });
 }
 
-// Init render
-game.render();
+function moveFromDrag(toP, toZone) {
+  if (!dragData) return;
+  const { p: fromP, zone: fromZone, idx: fromIdx } = dragData;
+  const s = state[fromP];
+  if (!s) return;
+
+  let card;
+  if (SLOTS.includes(fromZone)) {
+    card = s.slots[fromZone];
+    if (!card) return;
+    s.slots[fromZone] = null;
+  } else {
+    card = s[fromZone].splice(fromIdx, 1)[0];
+    if (!card) return;
+  }
+
+  const ds = state[toP];
+  if (!ds) return;
+
+  if (SLOTS.includes(toZone)) {
+    if (ds.slots[toZone]) {
+      ds.discard.push(ds.slots[toZone]);
+    }
+    card.state = 'stand';
+    card.faceUp = true;
+    ds.slots[toZone] = card;
+  } else {
+    ds[toZone].push(card);
+  }
+  dragData = null;
+  render();
+}
+
+// --- Context menus ---
+function cardMenu(e, p, zone, idx) {
+  e.preventDefault();
+  const s = state[p];
+  if (!s) return;
+  let card;
+  if (SLOTS.includes(zone)) card = s.slots[zone];
+  else card = s[zone][idx];
+  if (!card) return;
+
+  const items = [];
+  if (SLOTS.includes(zone)) {
+    if (card.state === 'stand') items.push({ label: 'レスト', fn() { card.state = 'rest'; render(); } });
+    if (card.state === 'rest') items.push({ label: 'リバース', fn() { card.state = 'reverse'; render(); } });
+    if (card.state !== 'stand') items.push({ label: 'スタンド', fn() { card.state = 'stand'; render(); } });
+    items.push({ label: '裏返す', fn() { card.faceUp = !card.faceUp; render(); } });
+  }
+  items.push({ label: '→ 控え室', fn() { removeCard(p, zone, idx); s.discard.push(card); render(); } });
+  items.push({ label: '→ 手札', fn() { removeCard(p, zone, idx); s.hand.push(card); render(); } });
+  items.push({ label: '→ デッキトップ', fn() { removeCard(p, zone, idx); s.deck.push(card); render(); } });
+  items.push({ label: '→ デッキボトム', fn() { removeCard(p, zone, idx); s.deck.unshift(card); render(); } });
+  showCtxMenu(e, items);
+}
+
+function deckMenu(e, p) {
+  e.preventDefault();
+  const s = state[p];
+  if (!s) return;
+  const items = [
+    { label: 'ドロー', fn() { game.draw(p); } },
+    { label: 'シャッフル', fn() { game.shuffle(p); } },
+    { label: 'トップ確認', fn() { if (s.deck.length) log(`トップ: ${s.deck[s.deck.length-1].name}`); } },
+    { label: 'ダメージ', fn() { game.dealDamage(p); } },
+  ];
+  showCtxMenu(e, items);
+}
+
+function zoneMenu(e, p, zone) {
+  e.preventDefault();
+  const s = state[p];
+  if (!s) return;
+  const items = [
+    { label: '全て見る', fn() { game.showZone(p, zone); } },
+    { label: '全てデッキに戻す', fn() { s.deck.push(...s[zone]); s[zone] = []; shuffle(s.deck); render(); } },
+  ];
+  showCtxMenu(e, items);
+}
+
+function removeCard(p, zone, idx) {
+  const s = state[p];
+  if (SLOTS.includes(zone)) s.slots[zone] = null;
+  else s[zone].splice(idx, 1);
+}
+
+function showCtxMenu(e, items) {
+  const menu = document.getElementById('ctx-menu');
+  menu.innerHTML = items.map((it, i) => `<div onclick="ctxAction(${i})">${it.label}</div>`).join('');
+  menu.style.left = e.clientX + 'px';
+  menu.style.top = e.clientY + 'px';
+  menu.style.display = 'block';
+  menu._items = items;
+}
+function ctxAction(i) {
+  const menu = document.getElementById('ctx-menu');
+  menu.style.display = 'none';
+  if (menu._items && menu._items[i]) menu._items[i].fn();
+}
+document.addEventListener('click', () => { document.getElementById('ctx-menu').style.display = 'none'; });
+
+// --- Zone panel ---
+function openZonePanel(title, cards, p, zone) {
+  const panel = document.getElementById('zone-panel');
+  document.getElementById('zone-panel-title').textContent = title;
+  document.getElementById('zone-panel-cards').innerHTML = cards.map((c, i) => makeCardHtml(c, p, zone, i)).join('');
+  panel.style.display = 'flex';
+  setupDragDrop();
+}
+function closeZonePanel() { document.getElementById('zone-panel').style.display = 'none'; }
+
+// --- Utility ---
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function log(msg, cls) {
+  const el = document.getElementById('log');
+  el.innerHTML = `<div class="entry ${cls || ''}">${msg}</div>` + el.innerHTML;
+}
+
+function nAdj(id, d) {
+  const el = document.getElementById(id);
+  el.textContent = Math.max(1, (+el.textContent) + d);
+}
+
+// --- Init ---
+populateDeckSelects();
+render();

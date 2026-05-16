@@ -7,90 +7,104 @@
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<header>
-  <h1>ChaosTCG Sim</h1>
-  <nav><a href="recipe.html">レシピDB</a></nav>
-</header>
+<div id="app">
+<div id="fields">
 
-<div class="container">
-  <!-- Deck select -->
-  <div id="deck-select">
-    <button onclick="loadFromStorage()">localStorageから読込</button>
-    <button onclick="loadSampleDeck()">サンプルデッキ</button>
+<!-- P2 (opponent) -->
+<div class="field" id="field-1">
+<div class="playmat">
+  <div class="mat-left">
+    <div class="zone" data-p="1" data-zone="deck" onclick="game.showZone(1,'deck')" oncontextmenu="deckMenu(event,1)"><span class="zone-label">デッキ</span><span class="zone-count" id="p1-deck-count">0</span></div>
+    <div class="zone" data-p="1" data-zone="extra" onclick="game.showZone(1,'extra')"><span class="zone-label">EX</span><span class="zone-count" id="p1-extra-count">0</span></div>
   </div>
-
-  <!-- Phase bar -->
-  <div id="phase-bar">
-    <span class="phase" data-phase="beginning">ビギニング</span>
-    <span class="phase" data-phase="main">メイン</span>
-    <span class="phase" data-phase="battle">バトル</span>
-    <span class="phase" data-phase="end">エンド</span>
-    <span id="turn-count">T0</span>
-  </div>
-
-  <!-- Field -->
-  <div id="field">
-    <div id="deck-area">
-      <span class="zone-label">デッキ</span>
-      <div class="slot" id="deck-slot" onclick="game.peekDeck()">
-        <span class="zone-count" id="deck-count">0</span>
-      </div>
-      <span class="zone-label">EX</span>
-      <div class="slot" id="extra-slot">
-        <span class="zone-count" id="extra-count">0</span>
-      </div>
+  <div class="mat-center">
+    <div class="hand-area" id="p1-hand-area">
+      <span class="zone-label">相手手札 (<span id="p1-hand-count">0</span>)</span>
+      <div class="card-row" id="p1-hand-cards"></div>
     </div>
-
-    <div id="arena">
-      <div id="partner-row">
-        <div class="slot partner" data-area="partner" onclick="game.clickSlot('partner')"></div>
-      </div>
-      <div class="slot" data-area="back-l" onclick="game.clickSlot('back-l')"><span>後衛L</span></div>
-      <div class="slot" data-area="back-r" onclick="game.clickSlot('back-r')"><span>後衛R</span></div>
-      <div class="slot" data-area="front-l" onclick="game.clickSlot('front-l')"><span>前衛L</span></div>
-      <div class="slot" data-area="front-r" onclick="game.clickSlot('front-r')"><span>前衛R</span></div>
+    <div class="stage-row back-row">
+      <div class="slot" data-p="1" data-slot="back-l" id="p1-back-l"></div>
+      <div class="slot partner-slot" data-p="1" data-slot="partner" id="p1-partner"></div>
+      <div class="slot" data-p="1" data-slot="back-r" id="p1-back-r"></div>
     </div>
-
-    <div id="discard-area">
-      <span class="zone-label">控え室</span>
-      <div class="slot" id="discard-slot" onclick="game.showDiscard()">
-        <span class="zone-count" id="discard-count">0</span>
-      </div>
-      <span class="zone-label">バックヤード</span>
-      <div class="slot" id="backyard-slot">
-        <span class="zone-count" id="backyard-count">0</span>
-      </div>
+    <div class="stage-row front-row">
+      <div class="slot" data-p="1" data-slot="front-l" id="p1-front-l"></div>
+      <div class="slot" style="visibility:hidden;width:calc(var(--cw) + 16px)"></div>
+      <div class="slot" data-p="1" data-slot="front-r" id="p1-front-r"></div>
     </div>
   </div>
-
-  <!-- Hand -->
-  <div id="hand-area">
-    <h3>手札 (<span id="hand-count">0</span>)</h3>
-    <div id="hand"></div>
-  </div>
-
-  <!-- Actions -->
-  <div id="actions">
-    <button onclick="game.nextPhase()">次フェイズ ▶</button>
-    <button onclick="game.draw()">ドロー</button>
-    <button onclick="game.mulligan()" id="btn-mulligan">マリガン</button>
-    <button onclick="game.levelUp()" id="btn-levelup">レベルアップ</button>
-    <button onclick="game.attack()" id="btn-attack">アタック</button>
-    <button onclick="game.dealDamage()" id="btn-damage">ダメージ</button>
-    <button onclick="game.shuffleDeck()">シャッフル</button>
-    <button onclick="game.reset()">リセット</button>
-  </div>
-
-  <!-- Log -->
-  <div id="log-area">
-    <h3>ログ</h3>
-    <div id="log"></div>
+  <div class="mat-right">
+    <div class="zone" data-p="1" data-zone="discard" onclick="game.showZone(1,'discard')" oncontextmenu="zoneMenu(event,1,'discard')"><span class="zone-label">控え室</span><span class="zone-count" id="p1-discard-count">0</span></div>
+    <div class="zone" data-p="1" data-zone="backyard"><span class="zone-label">バックヤード</span><span class="zone-count" id="p1-backyard-count">0</span></div>
   </div>
 </div>
+</div>
 
-<!-- Modal -->
-<div class="modal" id="modal">
-  <div class="modal-content" id="modal-content"></div>
+<!-- P0 (self) -->
+<div class="field" id="field-0">
+<div class="playmat">
+  <div class="mat-left">
+    <div class="zone" data-p="0" data-zone="deck" onclick="game.showZone(0,'deck')" oncontextmenu="deckMenu(event,0)"><span class="zone-label">デッキ</span><span class="zone-count" id="p0-deck-count">0</span></div>
+    <div class="zone" data-p="0" data-zone="extra" onclick="game.showZone(0,'extra')"><span class="zone-label">EX</span><span class="zone-count" id="p0-extra-count">0</span></div>
+  </div>
+  <div class="mat-center">
+    <div class="stage-row front-row">
+      <div class="slot" data-p="0" data-slot="front-l" id="p0-front-l"></div>
+      <div class="slot" style="visibility:hidden;width:calc(var(--cw) + 16px)"></div>
+      <div class="slot" data-p="0" data-slot="front-r" id="p0-front-r"></div>
+    </div>
+    <div class="stage-row back-row">
+      <div class="slot" data-p="0" data-slot="back-l" id="p0-back-l"></div>
+      <div class="slot partner-slot" data-p="0" data-slot="partner" id="p0-partner"></div>
+      <div class="slot" data-p="0" data-slot="back-r" id="p0-back-r"></div>
+    </div>
+    <div class="hand-area" id="p0-hand-area">
+      <span class="zone-label">手札 (<span id="p0-hand-count">0</span>)</span>
+      <div class="card-row" id="p0-hand-cards"></div>
+    </div>
+  </div>
+  <div class="mat-right">
+    <div class="zone" data-p="0" data-zone="discard" onclick="game.showZone(0,'discard')" oncontextmenu="zoneMenu(event,0,'discard')"><span class="zone-label">控え室</span><span class="zone-count" id="p0-discard-count">0</span></div>
+    <div class="zone" data-p="0" data-zone="backyard"><span class="zone-label">バックヤード</span><span class="zone-count" id="p0-backyard-count">0</span></div>
+  </div>
+</div>
+</div>
+
+</div>
+</div>
+
+<!-- Right panel -->
+<div class="side-panel">
+  <div class="action-buttons">
+    <button onclick="game.draw(0)">ドロー</button>
+    <button onclick="game.draw(1)">相手ドロー</button>
+    <div class="n-ctrl"><button onclick="nAdj('dmg-n',-1)">−</button><span id="dmg-n">1</span><button onclick="nAdj('dmg-n',1)">+</button><button onclick="game.dealDamage(0)" style="flex:1;margin-left:4px">ダメージ</button></div>
+    <button onclick="game.shuffle(0)">シャッフル</button>
+    <button onclick="game.mulligan(0)">マリガン</button>
+    <button onclick="game.standAll(0)">全スタンド</button>
+    <button onclick="game.standAll(1)">相手全スタンド</button>
+    <button onclick="resetGame()">リセット</button>
+  </div>
+  <div class="log" id="log"></div>
+</div>
+
+<!-- Zone panel -->
+<div id="zone-panel" class="zone-panel" style="display:none">
+  <div class="zone-panel-header"><span id="zone-panel-title"></span><button onclick="closeZonePanel()">✕</button></div>
+  <div class="card-row" id="zone-panel-cards"></div>
+</div>
+
+<!-- Context menu -->
+<div id="ctx-menu" class="context-menu" style="display:none"></div>
+
+<!-- Deck select modal -->
+<div id="deck-modal" class="modal">
+  <div class="modal-content">
+    <h2>デッキ選択</h2>
+    <div><label>P1:</label><select id="deck-select-0"></select></div>
+    <div><label>P2:</label><select id="deck-select-1"></select></div>
+    <button onclick="startGame()">ゲーム開始</button>
+  </div>
 </div>
 
 <script src="game.js"></script>
