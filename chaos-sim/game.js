@@ -81,7 +81,12 @@ const game = {
   showZone(p, zone) {
     const s = state[p];
     if (!s) return;
-    const cards = s[zone] || [];
+    let cards;
+    if (zone === 'extra') {
+      cards = s.extra;
+    } else {
+      cards = s[zone] || [];
+    }
     if (cards.length === 0) { log(`P${p+1} ${zone} は空`); return; }
     openZonePanel(`P${p+1} ${zone} (${cards.length})`, cards, p, zone);
   },
@@ -124,44 +129,55 @@ function getContainer(p, zone) {
 }
 
 // --- Deck loading ---
-function getDecks() { return JSON.parse(localStorage.getItem('chaos-decks') || '{}'); }
+// recipe.html saves to 'chaos_decks' as array of {name, partner, cards:[{number,count}]}
+function getDecks() {
+  return JSON.parse(localStorage.getItem('chaos_decks') || '[]');
+}
+
+function isExtraCard(number) {
+  const n = (number || '').toUpperCase();
+  return n.includes('EX') || n.endsWith('SP');
+}
 
 function populateDeckSelects() {
   const decks = getDecks();
-  const names = Object.keys(decks);
   for (let i = 0; i < 2; i++) {
     const sel = document.getElementById('deck-select-' + i);
-    sel.innerHTML = names.map(n => `<option value="${n}">${n}</option>`).join('');
+    sel.innerHTML = decks.map((d, idx) => `<option value="${idx}">${d.name || 'デッキ' + (idx+1)}</option>`).join('');
+    if (!decks.length) sel.innerHTML = '<option>デッキなし</option>';
   }
 }
 
 function startGame() {
   const decks = getDecks();
+  if (!decks.length) { log('デッキがありません。recipe.htmlからインポートしてください'); return; }
   for (let p = 0; p < 2; p++) {
-    const name = document.getElementById('deck-select-' + p).value;
-    const deck = decks[name];
-    if (!deck) { log('デッキが見つかりません: ' + name); return; }
+    const idx = +document.getElementById('deck-select-' + p).value;
+    const deck = decks[idx];
+    if (!deck) { log('デッキが見つかりません'); return; }
     state[p] = newPlayerState();
-    const cards = [];
-    deck.forEach(entry => {
-      const num = entry.number || entry.n || entry;
+    const mainCards = [];
+    const extraCards = [];
+    (deck.cards || []).forEach(entry => {
+      const num = entry.number;
       const cm = cardMap[num] || {};
-      for (let i = 0; i < (entry.count || entry.num || 1); i++) {
-        cards.push({ number: num, name: cm.name || num, image: cm.image || '', state: 'stand', faceUp: true, level: 0, damage: 0, levelCards: [] });
+      for (let i = 0; i < (entry.count || 1); i++) {
+        const c = { number: num, name: cm.name || num, image: cm.image || '', state: 'stand', faceUp: true, level: 0, damage: 0, levelCards: [] };
+        if (isExtraCard(num)) extraCards.push(c);
+        else mainCards.push(c);
       }
     });
-    // Find partner
-    const pi = cards.findIndex(c => {
-      const num = c.number.toUpperCase();
-      return num.includes('-P') || num.includes('PR');
-    });
-    if (pi >= 0) {
-      state[p].slots.partner = cards.splice(pi, 1)[0];
-    } else if (cards.length > 0) {
-      state[p].slots.partner = cards.splice(0, 1)[0];
+    state[p].extra = extraCards;
+    // Set partner
+    const partnerNum = deck.partner;
+    let pi = -1;
+    if (partnerNum) pi = mainCards.findIndex(c => c.number === partnerNum);
+    if (pi < 0) pi = 0;
+    if (mainCards.length > 0) {
+      state[p].slots.partner = mainCards.splice(pi, 1)[0];
     }
-    shuffle(cards);
-    state[p].deck = cards;
+    shuffle(mainCards);
+    state[p].deck = mainCards;
     // Draw 5
     for (let i = 0; i < 5 && state[p].deck.length > 0; i++) {
       state[p].hand.push(state[p].deck.pop());
@@ -178,20 +194,6 @@ function resetGame() {
   populateDeckSelects();
   render();
 }
-
-// --- Import from recipe.html localStorage ---
-(function checkImport() {
-  const raw = localStorage.getItem('chaos-deck');
-  if (raw) {
-    try {
-      const d = JSON.parse(raw);
-      const decks = getDecks();
-      const name = d.name || d.partner || 'インポート';
-      decks[name] = d.cards || [];
-      localStorage.setItem('chaos-decks', JSON.stringify(decks));
-    } catch(e) {}
-  }
-})();
 
 // --- Render ---
 function render() {
