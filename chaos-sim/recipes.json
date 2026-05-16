@@ -43855,19 +43855,7 @@
       {
         "number": "SW-065",
         "count": 3
-      }
-    ],
-    "total": 50
-  },
-  {
-    "id": "recipe_bcf2010_hs_2",
-    "source_file": "-recipe-recipe_bcf2010_hs.png",
-    "year": 2010,
-    "event_type": "BCF",
-    "location": "",
-    "rank": 2,
-    "partner": "",
-    "cards": [
+      },
       {
         "number": "SW-069",
         "count": 3
@@ -43877,7 +43865,7 @@
         "count": 3
       }
     ],
-    "total": 6
+    "total": 56
   },
   {
     "id": "recipe_bcf2010_ka_1",
@@ -47275,19 +47263,7 @@
       {
         "number": "NV-096",
         "count": 3
-      }
-    ],
-    "total": 48
-  },
-  {
-    "id": "recipe_bcf2010_tk_2",
-    "source_file": "-recipe-recipe_bcf2010_tk.png",
-    "year": 2010,
-    "event_type": "BCF",
-    "location": "",
-    "rank": 2,
-    "partner": "",
-    "cards": [
+      },
       {
         "number": "AP-098",
         "count": 4
@@ -47301,7 +47277,7 @@
         "count": 1
       }
     ],
-    "total": 6
+    "total": 54
   },
   {
     "id": "recipe_bcf2010_to_1",
@@ -49679,19 +49655,7 @@
       {
         "number": "AP-152",
         "count": 4
-      }
-    ],
-    "total": 50
-  },
-  {
-    "id": "recipe_bcf2011_hiro_2",
-    "source_file": "-recipe-recipe_bcf2011_hiro.png",
-    "year": 2011,
-    "event_type": "BCF",
-    "location": "",
-    "rank": 2,
-    "partner": "",
-    "cards": [
+      },
       {
         "number": "AP-139",
         "count": 3
@@ -49705,7 +49669,7 @@
         "count": 1
       }
     ],
-    "total": 7
+    "total": 57
   },
   {
     "id": "recipe_bcf2011_kan_1",
@@ -49999,19 +49963,7 @@
       {
         "number": "NV-154",
         "count": 1
-      }
-    ],
-    "total": 48
-  },
-  {
-    "id": "recipe_bcf2011_ma_2",
-    "source_file": "-recipe-recipe_bcf2011_ma.png",
-    "year": 2011,
-    "event_type": "BCF",
-    "location": "",
-    "rank": 2,
-    "partner": "",
-    "cards": [
+      },
       {
         "number": "NV-155",
         "count": 4
@@ -50021,7 +49973,7 @@
         "count": 1
       }
     ],
-    "total": 5
+    "total": 53
   },
   {
     "id": "recipe_bcf2011_nag_1",
@@ -68087,19 +68039,7 @@
       {
         "number": "GR-058",
         "count": 1
-      }
-    ],
-    "total": 51
-  },
-  {
-    "id": "recipe_bcf2012_yona_2",
-    "source_file": "-recipe-recipe_bcf2012_yona.png",
-    "year": 2012,
-    "event_type": "BCF",
-    "location": "",
-    "rank": 2,
-    "partner": "",
-    "cards": [
+      },
       {
         "number": "GR-062",
         "count": 3
@@ -68117,7 +68057,7 @@
         "count": 0
       }
     ],
-    "total": 5
+    "total": 56
   },
   {
     "id": "recipe_bcf2012_zenkoku_1",
@@ -133987,19 +133927,7 @@
       {
         "number": "AG-277",
         "count": 2
-      }
-    ],
-    "total": 52
-  },
-  {
-    "id": "recipe_murap11_2",
-    "source_file": "-recipe-recipe_murap11.png",
-    "year": null,
-    "event_type": "むらやまP杯",
-    "location": "",
-    "rank": 2,
-    "partner": "",
-    "cards": [
+      },
       {
         "number": "AG-284",
         "count": 3
@@ -134025,7 +133953,7 @@
         "count": 4
       }
     ],
-    "total": 13
+    "total": 65
   },
   {
     "id": "recipe_murap12_1",
@@ -134391,19 +134319,7 @@
       {
         "number": "AG-132",
         "count": 1
-      }
-    ],
-    "total": 50
-  },
-  {
-    "id": "recipe_murap13_2",
-    "source_file": "-recipe-recipe_murap13.png",
-    "year": null,
-    "event_type": "むらやまP杯",
-    "location": "",
-    "rank": 2,
-    "partner": "",
-    "cards": [
+      },
       {
         "number": "AG-168",
         "count": 7
@@ -134421,7 +134337,7 @@
         "count": 4
       }
     ],
-    "total": 15
+    "total": 65
   },
   {
     "id": "recipe_murap14_1",
@@ -135115,19 +135031,7 @@
       {
         "number": "P1",
         "count": 3
-      }
-    ],
-    "total": 48
-  },
-  {
-    "id": "recipe_murap18_2",
-    "source_file": "-recipe-recipe_murap18.png",
-    "year": null,
-    "event_type": "むらやまP杯",
-    "location": "",
-    "rank": 2,
-    "partner": "",
-    "cards": [
+      },
       {
         "number": "PI-042",
         "count": 4
@@ -135149,7 +135053,7 @@
         "count": 1
       }
     ],
-    "total": 7
+    "total": 55
   },
   {
     "id": "recipe_murap2_1",
@@ -135259,19 +135163,7 @@
       {
         "number": "AG-115",
         "count": 1
-      }
-    ],
-    "total": 49
-  },
-  {
-    "id": "recipe_murap2_2",
-    "source_file": "-recipe-recipe_murap2.png",
-    "year": null,
-    "event_type": "むらやまP杯",
-    "location": "",
-    "rank": 2,
-    "partner": "",
-    "cards": [
+      },
       {
         "number": "AG-119",
         "count": 3
@@ -135289,7 +135181,7 @@
         "count": 1
       }
     ],
-    "total": 5
+    "total": 54
   },
   {
     "id": "recipe_murap3_1",
@@ -139107,19 +138999,7 @@
       {
         "number": "SW-286",
         "count": 2
-      }
-    ],
-    "total": 52
-  },
-  {
-    "id": "recipe_radio01_2",
-    "source_file": "-recipe-recipe_radio01.png",
-    "year": null,
-    "event_type": "その他",
-    "location": "",
-    "rank": 2,
-    "partner": "",
-    "cards": [
+      },
       {
         "number": "SW-300",
         "count": 4
@@ -139129,7 +139009,7 @@
         "count": 1
       }
     ],
-    "total": 5
+    "total": 57
   },
   {
     "id": "recipe_radio02_1",
@@ -139483,19 +139363,7 @@
       {
         "number": "HN-046",
         "count": 2
-      }
-    ],
-    "total": 53
-  },
-  {
-    "id": "recipe_radio04_2",
-    "source_file": "-recipe-recipe_radio04.png",
-    "year": null,
-    "event_type": "その他",
-    "location": "",
-    "rank": 2,
-    "partner": "",
-    "cards": [
+      },
       {
         "number": "HN-047",
         "count": 3
@@ -139513,7 +139381,7 @@
         "count": 4
       }
     ],
-    "total": 9
+    "total": 62
   },
   {
     "id": "recipe_scf2010_ha_1",
@@ -150063,25 +149931,13 @@
       {
         "number": "AU-165",
         "count": 1
-      }
-    ],
-    "total": 53
-  },
-  {
-    "id": "recipe_wgp2011_aki_2",
-    "source_file": "-recipe-recipe_wgp2011_aki.png",
-    "year": 2011,
-    "event_type": "WGP",
-    "location": "",
-    "rank": 2,
-    "partner": "",
-    "cards": [
+      },
       {
         "number": "AU-194",
         "count": 4
       }
     ],
-    "total": 4
+    "total": 57
   },
   {
     "id": "recipe_wgp2011_ha_1",
@@ -153371,19 +153227,7 @@
       {
         "number": "AU-218",
         "count": 2
-      }
-    ],
-    "total": 50
-  },
-  {
-    "id": "recipe_wgp2011_ooi_2",
-    "source_file": "-recipe-recipe_wgp2011_ooi.png",
-    "year": 2011,
-    "event_type": "WGP",
-    "location": "",
-    "rank": 2,
-    "partner": "",
-    "cards": [
+      },
       {
         "number": "AU-154",
         "count": 3
@@ -153409,7 +153253,7 @@
         "count": 1
       }
     ],
-    "total": 10
+    "total": 60
   },
   {
     "id": "recipe_wgp2011_sa_1",
@@ -219499,19 +219343,7 @@
       {
         "number": "SI-060",
         "count": 1
-      }
-    ],
-    "total": 49
-  },
-  {
-    "id": "recipe_wpg2010_hs_2",
-    "source_file": "-recipe-recipe_wpg2010_hs.png",
-    "year": 2010,
-    "event_type": "WGP",
-    "location": "",
-    "rank": 2,
-    "partner": "",
-    "cards": [
+      },
       {
         "number": "SI-065",
         "count": 4
@@ -219521,7 +219353,7 @@
         "count": 1
       }
     ],
-    "total": 5
+    "total": 54
   },
   {
     "id": "recipe_wpg2010_ka_1",

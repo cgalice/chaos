@@ -121,49 +121,52 @@ def ocr_recipe_image(filepath):
 
 
 def ocr_recipe_simple(filepath):
-    """番号+枚数を取得し、累積50枚で区切る（メイン50枚+エクストラ10枚）"""
+    """列別OCR + 累積50枚区切り。"""
     img = Image.open(filepath)
     w, h = img.size
     
+    # 番号列OCR（eng、高精度）
     num_col = img.crop((270, 780, 440, h - 50))
     num_col = ImageEnhance.Contrast(num_col).enhance(1.5)
     num_text = pytesseract.image_to_string(num_col, lang='eng', config='--psm 6')
     
-    count_col = img.crop((890, 780, 950, h - 50))
-    count_col = ImageEnhance.Contrast(count_col).enhance(1.5)
-    count_text = pytesseract.image_to_string(count_col, lang='eng', config='--psm 6 -c tessedit_char_whitelist=0123456789')
-    
     card_pattern = re.compile(r'([A-Z]{1,5}[-/]?(?:BPR|PR|T|SP|SD)?\d{1,4}(?:EX)?)', re.IGNORECASE)
-    
     entries = []
     for line in num_text.split('\n'):
-        line = line.strip()
-        if not line:
-            continue
-        m = card_pattern.search(line)
+        m = card_pattern.search(line.strip())
         if m:
             entries.append(m.group(1).upper().replace('/', '-'))
     
+    # 枚数列OCR
+    count_col = img.crop((890, 780, 950, h - 50))
+    count_col = ImageEnhance.Contrast(count_col).enhance(1.5)
+    count_text = pytesseract.image_to_string(count_col, lang='eng', config='--psm 6 -c tessedit_char_whitelist=0123456789')
     counts = [int(c) for c in re.findall(r'\d+', count_text)]
     
-    # 累積48枚以上 & 次カード3枚以上（パートナー）で区切り
-    decks = []
-    current = []
-    total = 0
-    
+    # カード+枚数組み立て
+    all_cards = []
     for i, card_num in enumerate(entries):
         count = counts[i] if i < len(counts) else 1
         if count > 10:
             count = 4
-        
-        if total >= 48 and count >= 3 and current:
+        all_cards.append({"number": card_num, "count": count})
+    
+    # 1デッキ分（65枚以下）ならそのまま返す
+    total_all = sum(c['count'] for c in all_cards)
+    if total_all <= 65:
+        return [all_cards] if all_cards else []
+    
+    # 累積50枚で区切り（次カード3枚以上=パートナー候補で分割）
+    decks = []
+    current = []
+    total = 0
+    for card in all_cards:
+        if total >= 48 and card['count'] >= 3 and current:
             decks.append(current)
             current = []
             total = 0
-        
-        current.append({"number": card_num, "count": count})
-        total += count
-    
+        current.append(card)
+        total += card['count']
     if current:
         decks.append(current)
     
