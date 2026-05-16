@@ -121,61 +121,51 @@ def ocr_recipe_image(filepath):
 
 
 def ocr_recipe_simple(filepath):
-    """番号と枚数を取得し、パートナー行（括弧付き）でデッキを分割"""
+    """番号+枚数を取得し、累積50枚で区切る（メイン50枚+エクストラ10枚）"""
     img = Image.open(filepath)
     w, h = img.size
     
-    # 番号列（狭め: カード番号のみ）
     num_col = img.crop((270, 780, 440, h - 50))
     num_col = ImageEnhance.Contrast(num_col).enhance(1.5)
     num_text = pytesseract.image_to_string(num_col, lang='eng', config='--psm 6')
     
-    # 枚数列
     count_col = img.crop((890, 780, 950, h - 50))
     count_col = ImageEnhance.Contrast(count_col).enhance(1.5)
     count_text = pytesseract.image_to_string(count_col, lang='eng', config='--psm 6 -c tessedit_char_whitelist=0123456789')
     
-    # 番号行をパース
     card_pattern = re.compile(r'([A-Z]{1,5}[-/]?(?:BPR|PR|T|SP|SD)?\d{1,4}(?:EX)?)', re.IGNORECASE)
-    partner_marker = re.compile(r'[({\[]')
     
-    entries = []  # (card_number, is_partner_line)
-    for line in num_text.strip().split('\n'):
+    entries = []
+    for line in num_text.split('\n'):
         line = line.strip()
         if not line:
             continue
         m = card_pattern.search(line)
         if m:
-            card_num = m.group(1).upper().replace('/', '-')
-            remainder = line[m.end():]
-            is_partner = bool(partner_marker.search(remainder))
-            entries.append((card_num, is_partner))
+            entries.append(m.group(1).upper().replace('/', '-'))
     
-    # 枚数（連続した数字のみ）
     counts = [int(c) for c in re.findall(r'\d+', count_text)]
     
-    # デッキ分割: パートナー行で区切る
+    # 累積48枚以上 & 次カード3枚以上（パートナー）で区切り
     decks = []
-    current_deck = []
-    ci = 0  # counts index
+    current = []
+    total = 0
     
-    for card_num, is_partner in entries:
-        # パートナー行で新デッキ開始
-        if is_partner and current_deck:
-            decks.append(current_deck)
-            current_deck = []
+    for i, card_num in enumerate(entries):
+        count = counts[i] if i < len(counts) else 1
+        if count > 10:
+            count = 4
         
-        count = counts[ci] if ci < len(counts) else 1
-        ci += 1
+        if total >= 48 and count >= 3 and current:
+            decks.append(current)
+            current = []
+            total = 0
         
-        current_deck.append({
-            "number": card_num,
-            "count": count,
-            "is_partner": not current_deck  # 各デッキの最初のカード
-        })
+        current.append({"number": card_num, "count": count})
+        total += count
     
-    if current_deck:
-        decks.append(current_deck)
+    if current:
+        decks.append(current)
     
     return decks
 
