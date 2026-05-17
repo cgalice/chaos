@@ -135,6 +135,8 @@ function getDecks() {
 }
 
 function isExtraCard(number) {
+  const info = cardMap[number];
+  if (info && info.type === 'extra') return true;
   const n = (number || '').toUpperCase();
   return n.includes('EX') || n.endsWith('SP');
 }

@@ -120,6 +120,8 @@ function setPartner(num) {
 }
 
 function isExtra(num) {
+  const info = cardMap[num];
+  if (info && info.type === 'extra') return true;
   return num.toUpperCase().includes('EX') || num.toUpperCase().endsWith('SP');
 }
 
