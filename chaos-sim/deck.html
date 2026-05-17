@@ -57,6 +57,7 @@ header nav a { color: #4a9fd4; text-decoration: none; font-size: 12px; margin-ri
 <div class="container">
   <div class="search-panel">
     <div class="search-bar">
+      <select id="os-filter" onchange="search()"><option value="">全OS</option></select>
       <input id="q" placeholder="カード番号 or 名前" onkeydown="if(event.key==='Enter')search()">
       <button onclick="search()">検索</button>
     </div>
@@ -78,17 +79,25 @@ header nav a { color: #4a9fd4; text-decoration: none; font-size: 12px; margin-ri
 let cardMap = {};
 let deck = { name: '', partner: '', cards: [] }; // cards: [{number, count}]
 
-fetch('card_map.json').then(r=>r.json()).then(d=>{ cardMap = d; populateLoad(); });
+fetch('card_map.json').then(r=>r.json()).then(d=>{ cardMap = d; populateLoad(); populateOsList(); });
+
+function populateOsList() {
+  const osSet = new Set();
+  for (const info of Object.values(cardMap)) { if (info.os) osSet.add(info.os); }
+  const sorted = [...osSet].sort();
+  const sel = document.getElementById('os-filter');
+  sel.innerHTML = '<option value="">全OS</option>' + sorted.map(o => `<option value="${o}">${o}</option>`).join('');
+}
 
 function search() {
   const q = document.getElementById('q').value.trim().toUpperCase();
-  if (!q) return;
+  const os = document.getElementById('os-filter').value;
   const results = [];
   for (const [num, info] of Object.entries(cardMap)) {
-    if (num.toUpperCase().includes(q) || (info.name && info.name.toUpperCase().includes(q))) {
-      results.push({ number: num, ...info });
-      if (results.length >= 50) break;
-    }
+    if (os && info.os !== os) continue;
+    if (q && !num.toUpperCase().includes(q) && !(info.name && info.name.toUpperCase().includes(q))) continue;
+    results.push({ number: num, ...info });
+    if (results.length >= 100) break;
   }
   const el = document.getElementById('results');
   el.innerHTML = results.map(c => `<div class="card-item">
