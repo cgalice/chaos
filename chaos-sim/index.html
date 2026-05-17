@@ -45,7 +45,7 @@
     </div>
   </div>
   <div class="mat-right">
-    <div class="zone" data-p="1" data-zone="deck" onclick="game.showZone(1,'deck')" oncontextmenu="deckMenu(event,1)"><span class="zone-label">デッキ</span><span class="zone-count" id="p1-deck-count">0</span></div>
+    <div class="zone" data-p="1" data-zone="deck" onclick="game.draw(1)" oncontextmenu="deckMenu(event,1)"><span class="zone-label">デッキ</span><span class="zone-count" id="p1-deck-count">0</span></div>
     <div class="zone" data-p="1" data-zone="discard" onclick="game.showZone(1,'discard')" oncontextmenu="zoneMenu(event,1,'discard')"><span class="zone-label">控え室</span><span class="zone-count" id="p1-discard-count">0</span></div>
   </div>
 </div>
@@ -86,7 +86,7 @@
     </div>
   </div>
   <div class="mat-right">
-    <div class="zone" data-p="0" data-zone="deck" onclick="game.showZone(0,'deck')" oncontextmenu="deckMenu(event,0)"><span class="zone-label">デッキ</span><span class="zone-count" id="p0-deck-count">0</span></div>
+    <div class="zone" data-p="0" data-zone="deck" onclick="game.draw(0)" oncontextmenu="deckMenu(event,0)"><span class="zone-label">デッキ</span><span class="zone-count" id="p0-deck-count">0</span></div>
     <div class="zone" data-p="0" data-zone="discard" onclick="game.showZone(0,'discard')" oncontextmenu="zoneMenu(event,0,'discard')"><span class="zone-label">控え室</span><span class="zone-count" id="p0-discard-count">0</span></div>
   </div>
 </div>

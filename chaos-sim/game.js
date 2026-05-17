@@ -112,6 +112,7 @@ function refreshPanel() {
   setupDragDrop();
 }
 function closeZonePanel() {
+  if (_peekState) { closePeek(); return; }
   _openPanel = null;
   document.getElementById('zone-panel').style.display = 'none';
 }
@@ -235,7 +236,7 @@ function renderBackyard(p) {
     div.dataset.p = p;
     div.dataset.zone = 'backyard';
     div.dataset.idx = i;
-    if (i > 0) div.style.marginLeft = `calc(var(--cw) * -0.7)`;
+    if (i >= 4) div.style.marginLeft = `calc(var(--cw) * -0.7)`;
     div.oncontextmenu = (e) => cardMenu(e, c.id);
     if (img) div.innerHTML = `<img class="card-img" src="${img}">`;
     else div.innerHTML = `<span class="card-name">${c.name}</span>`;
@@ -360,12 +361,125 @@ function deckMenu(e, p) {
   const s = state[p]; if (!s) return;
   showCtxMenu(e, [
     { label: 'ドロー', fn() { game.draw(p); } },
+    { label: '上から2枚見る', fn() { peekDeck(p, 2); } },
+    { label: '上から3枚見る', fn() { peekDeck(p, 3); } },
+    { label: '上から5枚見る', fn() { peekDeck(p, 5); } },
     { label: 'シャッフル', fn() { game.shuffle(p); } },
     { label: 'マリガン', fn() { game.mulligan(p); } },
     { label: '全スタンド', fn() { game.standAll(p); } },
     { label: 'ダメージ', fn() { game.dealDamage(p); } },
-    { label: 'トップ確認', fn() { if (s.deck.length) log(`トップ: ${s.deck[s.deck.length-1].name}`); } },
   ]);
+}
+
+function peekDeck(p, n) {
+  const s = state[p]; if (!s) return;
+  const count = Math.min(n, s.deck.length);
+  if (count === 0) { log('デッキが空です'); return; }
+  // Take top N cards (deck is array, top = last element)
+  const peeked = s.deck.slice(-count).reverse(); // top first
+  _peekState = { p, cards: peeked, originalIndices: [] };
+  // Store original indices for reordering
+  for (let i = 0; i < count; i++) _peekState.originalIndices.push(s.deck.length - count + i);
+  showPeekPanel(p, peeked);
+}
+
+let _peekState = null;
+
+function showPeekPanel(p, cards) {
+  const panel = document.getElementById('zone-panel');
+  document.getElementById('zone-panel-title').textContent = `P${p+1} デッキトップ ${cards.length}枚 (ドラッグで並び替え)`;
+  const ct = document.getElementById('zone-panel-cards');
+  ct.innerHTML = '';
+  cards.forEach((c, i) => {
+    const cm = cardMap[c.number] || {};
+    const img = c.image || cm.image || '';
+    const div = document.createElement('div');
+    div.className = 'card';
+    div.draggable = true;
+    div.dataset.peekIdx = i;
+    div.oncontextmenu = (ev) => {
+      ev.preventDefault(); ev.stopPropagation();
+      showCtxMenu(ev, [
+        { label: '→ デッキボトム', fn() { peekSendBottom(i); } },
+        { label: '→ 手札', fn() { peekSendHand(i); } },
+        { label: '→ 控え室', fn() { peekSendDiscard(i); } },
+      ]);
+    };
+    // Drag reorder within peek
+    div.addEventListener('dragstart', (ev) => { ev.dataTransfer.setData('text/plain', i); });
+    div.addEventListener('dragover', (ev) => { ev.preventDefault(); div.style.borderColor = '#4ad4a0'; });
+    div.addEventListener('dragleave', () => { div.style.borderColor = ''; });
+    div.addEventListener('drop', (ev) => {
+      ev.preventDefault(); div.style.borderColor = '';
+      const fromIdx = +ev.dataTransfer.getData('text/plain');
+      if (fromIdx === i) return;
+      const [moved] = _peekState.cards.splice(fromIdx, 1);
+      _peekState.cards.splice(i, 0, moved);
+      showPeekPanel(p, _peekState.cards);
+    });
+    if (img) div.innerHTML = `<img class="card-img" src="${img}">`;
+    else div.innerHTML = `<span class="card-name">${c.name}</span>`;
+    ct.appendChild(div);
+  });
+  // Close button = put back on top in current order
+  panel.style.display = 'flex';
+  _openPanel = null; // not a regular zone panel
+}
+
+function peekSendBottom(idx) {
+  const s = state[_peekState.p];
+  const card = _peekState.cards.splice(idx, 1)[0];
+  // Remove from deck
+  const deckIdx = s.deck.findIndex(c => c.id === card.id);
+  if (deckIdx >= 0) s.deck.splice(deckIdx, 1);
+  s.deck.unshift(card); // bottom
+  log(`${card.name} → デッキボトム`);
+  if (_peekState.cards.length === 0) closePeek();
+  else showPeekPanel(_peekState.p, _peekState.cards);
+  render();
+}
+
+function peekSendHand(idx) {
+  const s = state[_peekState.p];
+  const card = _peekState.cards.splice(idx, 1)[0];
+  const deckIdx = s.deck.findIndex(c => c.id === card.id);
+  if (deckIdx >= 0) s.deck.splice(deckIdx, 1);
+  s.hand.push(card);
+  log(`${card.name} → 手札`);
+  if (_peekState.cards.length === 0) closePeek();
+  else showPeekPanel(_peekState.p, _peekState.cards);
+  render();
+}
+
+function peekSendDiscard(idx) {
+  const s = state[_peekState.p];
+  const card = _peekState.cards.splice(idx, 1)[0];
+  const deckIdx = s.deck.findIndex(c => c.id === card.id);
+  if (deckIdx >= 0) s.deck.splice(deckIdx, 1);
+  s.discard.push(card);
+  log(`${card.name} → 控え室`);
+  if (_peekState.cards.length === 0) closePeek();
+  else showPeekPanel(_peekState.p, _peekState.cards);
+  render();
+}
+
+function closePeek() {
+  if (_peekState && _peekState.cards.length > 0) {
+    // Put remaining cards back on top in displayed order (first = top)
+    const s = state[_peekState.p];
+    // Remove peeked cards from deck
+    for (const c of _peekState.cards) {
+      const idx = s.deck.findIndex(x => x.id === c.id);
+      if (idx >= 0) s.deck.splice(idx, 1);
+    }
+    // Push back in reverse (so first displayed = top = last in array)
+    for (let i = _peekState.cards.length - 1; i >= 0; i--) {
+      s.deck.push(_peekState.cards[i]);
+    }
+    render();
+  }
+  _peekState = null;
+  document.getElementById('zone-panel').style.display = 'none';
 }
 
 function zoneMenu(e, p, zone) {
