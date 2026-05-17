@@ -506,3 +506,23 @@ function log(msg, cls) { document.getElementById('log').innerHTML = `<div class=
 // --- Init ---
 populateDeckSelects();
 render();
+
+// --- Panel drag ---
+(function() {
+  const modal = document.getElementById('zone-panel');
+  const header = modal.querySelector('.zone-panel-header');
+  if (!header) return;
+  header.addEventListener('pointerdown', e => {
+    if (e.target.tagName === 'BUTTON') return;
+    e.preventDefault();
+    header.setPointerCapture(e.pointerId);
+    const r = modal.getBoundingClientRect();
+    let ox = r.left, oy = r.top, mx = e.clientX, my = e.clientY;
+    modal.style.transform = 'none';
+    modal.style.left = ox + 'px'; modal.style.top = oy + 'px'; modal.style.bottom = 'auto';
+    const move = ev => { modal.style.left = (ox + ev.clientX - mx) + 'px'; modal.style.top = (oy + ev.clientY - my) + 'px'; };
+    const up = () => { header.removeEventListener('pointermove', move); header.removeEventListener('pointerup', up); };
+    header.addEventListener('pointermove', move);
+    header.addEventListener('pointerup', up);
+  });
+})();

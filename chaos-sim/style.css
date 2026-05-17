@@ -119,7 +119,7 @@ body { background: #1a2332; color: #e8f0ff; font-family: sans-serif; overflow: h
 
 /* Zone panel */
 .zone-panel { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); background: rgba(13,25,38,0.95); border: 1px solid #2a4a6a; border-bottom: none; border-radius: 8px 8px 0 0; padding: 6px 8px; z-index: 200; max-width: 80vw; max-height: 40vh; display: flex; flex-direction: column; }
-.zone-panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; font-size: 11px; color: #7ab; }
+.zone-panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; font-size: 11px; color: #7ab; cursor: grab; user-select: none; touch-action: none; }
 .zone-panel-header button { background: none; border: none; color: #e8f0ff; font-size: 16px; cursor: pointer; }
 .zone-panel .card-row { display: flex; gap: 4px; flex-wrap: wrap; overflow-y: auto; flex: 1; }
 
