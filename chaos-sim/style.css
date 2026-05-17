@@ -79,7 +79,7 @@ body { background: #1a2332; color: #e8f0ff; font-family: sans-serif; overflow: h
 .slot .card.reverse { transform: translate(-50%, -50%) rotate(180deg); }
 .front-row .slot { border-color: rgba(212,74,74,0.3); }
 .front-row .slot:hover { border-color: #d44a4a; }
-.front-row { gap: calc(var(--cw) * 0.5); }
+.front-row { gap: calc(var(--cw) + 20px); }
 .back-row .slot { border-color: rgba(74,100,212,0.3); }
 .back-row .slot:hover { border-color: #4a6ad4; }
 .slot.partner-slot { border-color: rgba(212,160,74,0.4); width: calc(var(--cw) + 16px); height: calc(var(--sh) + 4px); margin-top: calc(var(--ch) * 0.3); margin-bottom: calc(var(--ch) * -0.3); z-index: 2; }
