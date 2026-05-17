@@ -343,10 +343,11 @@ function cardMenu(e, id) {
   const items = [];
   // Slot cards (field + EX slots): state change
   if (SLOTS.includes(cardZone)) {
+    const isEx = cardZone.startsWith('ex-');
     if (card.state === 'stand') items.push({ label: 'レスト', fn() { card.state = 'rest'; render(); } });
-    if (card.state === 'rest') items.push({ label: 'リバース', fn() { card.state = 'reverse'; render(); } });
+    if (card.state === 'rest' && !isEx) items.push({ label: 'リバース', fn() { card.state = 'reverse'; render(); } });
     if (card.state !== 'stand') items.push({ label: 'スタンド', fn() { card.state = 'stand'; render(); } });
-    items.push({ label: '裏返す', fn() { card.faceUp = !card.faceUp; render(); } });
+    if (!isEx) items.push({ label: '裏返す', fn() { card.faceUp = !card.faceUp; render(); } });
   }
   items.push({ label: '⚡ 効果発動', fn() { log(`⚡ 効果発動: ${card.name}`); } });
   items.push({ label: '🎯 対象指定', fn() { log(`🎯 対象: ${card.name}`); } });

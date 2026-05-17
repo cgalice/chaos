@@ -61,7 +61,7 @@ body { background: #1a2332; color: #e8f0ff; font-family: sans-serif; overflow: h
 .ex-slot.drag-over { border-color: #4ad4a0; border-style: solid; }
 .ex-slot .card { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); }
 .ex-slot .card.rest { transform: translate(-50%, -50%) rotate(90deg); }
-.ex-deck { width: calc(var(--cw) + 8px); flex-shrink: 0; }
+.ex-deck { width: calc(var(--cw) + 4px); flex-shrink: 0; }
 
 /* Backyard zone: horizontal overlapping cards */
 .backyard-zone { height: calc(var(--ch) + 8px); flex-shrink: 0; flex-grow: 0; display: flex; overflow: hidden; background: rgba(74,159,212,0.05); border: 1px solid #2a4a6a; border-radius: 4px; padding: 2px; cursor: pointer; position: relative; }
