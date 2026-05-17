@@ -236,7 +236,7 @@ function renderBackyard(p) {
     div.dataset.p = p;
     div.dataset.zone = 'backyard';
     div.dataset.idx = i;
-    if (i >= 4) div.style.marginLeft = `calc(var(--cw) * -0.7)`;
+    if (i >= 4) div.style.marginLeft = `calc(var(--cw) * -1 + 4px)`;
     div.oncontextmenu = (e) => cardMenu(e, c.id);
     if (img) div.innerHTML = `<img class="card-img" src="${img}">`;
     else div.innerHTML = `<span class="card-name">${c.name}</span>`;
@@ -361,12 +361,8 @@ function deckMenu(e, p) {
   const s = state[p]; if (!s) return;
   showCtxMenu(e, [
     { label: 'ドロー', fn() { game.draw(p); } },
-    { label: '上から2枚見る', fn() { peekDeck(p, 2); } },
-    { label: '上から3枚見る', fn() { peekDeck(p, 3); } },
-    { label: '上から5枚見る', fn() { peekDeck(p, 5); } },
-    { label: 'シャッフル', fn() { game.shuffle(p); } },
+    { label: '上からN枚見る', fn() { const n = parseInt(prompt('何枚見る？'), 10); if (n > 0) peekDeck(p, n); } },
     { label: 'マリガン', fn() { game.mulligan(p); } },
-    { label: '全スタンド', fn() { game.standAll(p); } },
     { label: 'ダメージ', fn() { game.dealDamage(p); } },
   ]);
 }
@@ -387,7 +383,7 @@ let _peekState = null;
 
 function showPeekPanel(p, cards) {
   const panel = document.getElementById('zone-panel');
-  document.getElementById('zone-panel-title').textContent = `P${p+1} デッキトップ ${cards.length}枚 (ドラッグで並び替え)`;
+  document.getElementById('zone-panel-title').textContent = `P${p+1} デッキトップ ${cards.length}枚 ← トップ | ボトム →`;
   const ct = document.getElementById('zone-panel-cards');
   ct.innerHTML = '';
   cards.forEach((c, i) => {
