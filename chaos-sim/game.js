@@ -225,9 +225,6 @@ function renderBackyard(p) {
   el.innerHTML = '';
   if (!s || !s.backyard.length) return;
   const cards = s.backyard;
-  const containerW = el.offsetWidth || 150;
-  const cardW = 40; // approximate card width in px for overlap calc
-  const maxOffset = cards.length > 1 ? Math.min(cardW, (containerW - cardW) / (cards.length - 1)) : 0;
   cards.forEach((c, i) => {
     const cm = cardMap[c.number] || {};
     const img = c.image || cm.image || '';
@@ -238,8 +235,7 @@ function renderBackyard(p) {
     div.dataset.p = p;
     div.dataset.zone = 'backyard';
     div.dataset.idx = i;
-    div.style.left = (i * maxOffset) + 'px';
-    div.style.zIndex = i;
+    if (i > 0) div.style.marginLeft = `calc(var(--cw) * -0.7)`;
     div.oncontextmenu = (e) => cardMenu(e, c.id);
     if (img) div.innerHTML = `<img class="card-img" src="${img}">`;
     else div.innerHTML = `<span class="card-name">${c.name}</span>`;
