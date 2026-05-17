@@ -207,28 +207,17 @@ function makeCardHtml(card, p, zone, idx) {
   if (card.faceUp && !img) inner += `<span class="card-name">${card.name}</span>`;
   if (card.level > 0) inner += `<span class="level-badge">Lv${card.level}</span>`;
   if (card.damage > 0) inner += `<span class="dmg-badge">${card.damage}</span>`;
-  return `<div class="${cls.join(' ')}" draggable="true" data-id="${card.id}" data-p="${p}" data-zone="${zone}" data-idx="${idx}" oncontextmenu="cardMenu(event,${card.id})" onclick="zoomCard(event,${card.id})">${inner}</div>`;
+  return `<div class="${cls.join(' ')}" draggable="true" data-id="${card.id}" data-p="${p}" data-zone="${zone}" data-idx="${idx}" oncontextmenu="cardMenu(event,${card.id})">${inner}</div>`;
 }
 
 // --- Card zoom ---
-function zoomCard(e, id) {
-  if (e.detail > 1) return; // ignore dblclick
-  // Find card
-  let card = null;
-  for (let p = 0; p < 2; p++) {
-    const s = state[p]; if (!s) continue;
-    for (const z of ZONES) { const c = s[z].find(x => x.id === id); if (c) { card = c; break; } }
-    if (card) break;
-    for (const sl of SLOTS) { if (s.slots[sl] && s.slots[sl].id === id) { card = s.slots[sl]; break; } }
-    if (card) break;
-  }
+function showZoom(card) {
   if (!card || !card.faceUp) return;
   const cm = cardMap[card.number] || {};
-  const img = card.image || cm.image || '';
+  const img = (card.image || cm.image || '').replace('100_140', '200_280');
   if (!img) return;
-  // Show zoom overlay
   const overlay = document.getElementById('zoom-overlay');
-  overlay.innerHTML = `<img src="${img.replace('100_140','400_560')}" alt="${card.name}" onclick="this.parentElement.style.display='none'"><div class="zoom-name">${card.name}<br><small>${card.number}</small></div>`;
+  overlay.innerHTML = `<img src="${img}" alt="${card.name}"><div class="zoom-name">${card.name}<br><small>${card.number}</small></div>`;
   overlay.style.display = 'flex';
 }
 
@@ -294,28 +283,20 @@ function moveTo(toP, toZone) {
 // --- Context menus ---
 function cardMenu(e, id) {
   e.preventDefault(); e.stopPropagation();
-  let card = null, cardP = -1, cardZone = '';
+  let card = null, cardP = -1;
   for (let p = 0; p < 2; p++) {
     const s = state[p]; if (!s) continue;
-    for (const z of ZONES) { const idx = s[z].findIndex(c => c.id === id); if (idx >= 0) { card = s[z][idx]; cardP = p; cardZone = z; break; } }
+    for (const z of ZONES) { if (s[z].find(c => c.id === id)) { card = s[z].find(c => c.id === id); cardP = p; break; } }
     if (card) break;
-    for (const sl of SLOTS) { if (s.slots[sl] && s.slots[sl].id === id) { card = s.slots[sl]; cardP = p; cardZone = sl; break; } }
+    for (const sl of SLOTS) { if (s.slots[sl] && s.slots[sl].id === id) { card = s.slots[sl]; cardP = p; break; } }
     if (card) break;
   }
   if (!card) return;
-  const s = state[cardP];
-  const items = [];
-  if (SLOTS.includes(cardZone)) {
-    if (card.state === 'stand') items.push({ label: 'レスト', fn() { card.state = 'rest'; render(); } });
-    if (card.state === 'rest') items.push({ label: 'リバース', fn() { card.state = 'reverse'; render(); } });
-    if (card.state !== 'stand') items.push({ label: 'スタンド', fn() { card.state = 'stand'; render(); } });
-    items.push({ label: '裏返す', fn() { card.faceUp = !card.faceUp; render(); } });
-  }
-  items.push({ label: '→ 控え室', fn() { findAndRemove(id); s.discard.push(card); render(); } });
-  items.push({ label: '→ 手札', fn() { findAndRemove(id); s.hand.push(card); render(); } });
-  items.push({ label: '→ デッキトップ', fn() { findAndRemove(id); s.deck.push(card); render(); } });
-  items.push({ label: '→ デッキボトム', fn() { findAndRemove(id); s.deck.unshift(card); render(); } });
-  items.push({ label: '→ バックヤード', fn() { findAndRemove(id); s.backyard.push(card); render(); } });
+  const items = [
+    { label: '⚡ 効果発動', fn() { log(`⚡ 効果発動: ${card.name}`); } },
+    { label: '🎯 対象指定', fn() { log(`🎯 対象: ${card.name}`); } },
+    { label: '🔍 拡大表示', fn() { showZoom(card); } },
+  ];
   showCtxMenu(e, items);
 }
 
