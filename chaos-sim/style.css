@@ -2,7 +2,7 @@
 body { background: #1a2332; color: #e8f0ff; font-family: sans-serif; overflow: hidden; height: 100vh; }
 
 :root {
-  --ch: 13vh;
+  --ch: 15vh;
   --cw: calc(var(--ch) * 5 / 7);
   --sh: calc(var(--ch) + 2px);
   --sw: calc(var(--cw) + 2px);
