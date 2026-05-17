@@ -331,20 +331,26 @@ function moveTo(toP, toZone) {
 // --- Context menus ---
 function cardMenu(e, id) {
   e.preventDefault(); e.stopPropagation();
-  let card = null, cardP = -1;
+  let card = null, cardP = -1, cardZone = '';
   for (let p = 0; p < 2; p++) {
     const s = state[p]; if (!s) continue;
-    for (const z of ZONES) { if (s[z].find(c => c.id === id)) { card = s[z].find(c => c.id === id); cardP = p; break; } }
+    for (const z of ZONES) { if (s[z].find(c => c.id === id)) { card = s[z].find(c => c.id === id); cardP = p; cardZone = z; break; } }
     if (card) break;
-    for (const sl of SLOTS) { if (s.slots[sl] && s.slots[sl].id === id) { card = s.slots[sl]; cardP = p; break; } }
+    for (const sl of SLOTS) { if (s.slots[sl] && s.slots[sl].id === id) { card = s.slots[sl]; cardP = p; cardZone = sl; break; } }
     if (card) break;
   }
   if (!card) return;
-  const items = [
-    { label: '⚡ 効果発動', fn() { log(`⚡ 効果発動: ${card.name}`); } },
-    { label: '🎯 対象指定', fn() { log(`🎯 対象: ${card.name}`); } },
-    { label: '🔍 拡大表示', fn() { showZoom(card); } },
-  ];
+  const items = [];
+  // Slot cards (field + EX slots): state change
+  if (SLOTS.includes(cardZone)) {
+    if (card.state === 'stand') items.push({ label: 'レスト', fn() { card.state = 'rest'; render(); } });
+    if (card.state === 'rest') items.push({ label: 'リバース', fn() { card.state = 'reverse'; render(); } });
+    if (card.state !== 'stand') items.push({ label: 'スタンド', fn() { card.state = 'stand'; render(); } });
+    items.push({ label: '裏返す', fn() { card.faceUp = !card.faceUp; render(); } });
+  }
+  items.push({ label: '⚡ 効果発動', fn() { log(`⚡ 効果発動: ${card.name}`); } });
+  items.push({ label: '🎯 対象指定', fn() { log(`🎯 対象: ${card.name}`); } });
+  items.push({ label: '🔍 拡大表示', fn() { showZoom(card); } });
   showCtxMenu(e, items);
 }
 
