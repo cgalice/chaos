@@ -3,7 +3,7 @@
 let cardMap = {};
 fetch('card_map.json').then(r => r.json()).then(d => { cardMap = d; }).catch(() => {});
 
-const SLOTS = ['partner', 'front-l', 'front-r', 'back-l', 'back-r'];
+const SLOTS = ['partner', 'front-l', 'front-r', 'back-l', 'back-r', 'ex-0', 'ex-1', 'ex-2', 'ex-3'];
 const ZONES = ['deck', 'extra', 'hand', 'discard', 'backyard'];
 let _cardId = 0;
 function nextId() { return ++_cardId; }
@@ -13,7 +13,7 @@ const state = [null, null];
 let _openPanel = null; // {p, zone}
 
 function newPlayerState() {
-  return { deck: [], extra: [], hand: [], discard: [], backyard: [], slots: { partner: null, 'front-l': null, 'front-r': null, 'back-l': null, 'back-r': null } };
+  return { deck: [], extra: [], hand: [], discard: [], backyard: [], slots: { partner: null, 'front-l': null, 'front-r': null, 'back-l': null, 'back-r': null, 'ex-0': null, 'ex-1': null, 'ex-2': null, 'ex-3': null } };
 }
 
 function findAndRemove(id) {
@@ -187,12 +187,14 @@ function render() {
     handEl.innerHTML = s ? s.hand.map((c, i) => makeCardHtml(c, p, 'hand', i)).join('') : '';
     for (const sl of SLOTS) {
       const slotEl = document.getElementById(`p${p}-${sl}`);
+      if (!slotEl) continue;
       const c = s ? s.slots[sl] : null;
       slotEl.innerHTML = c ? makeCardHtml(c, p, sl, 0) : '';
     }
-    // Zone top card display
+    // Discard top card
     renderZoneTop(p, 'discard');
-    renderZoneTop(p, 'backyard');
+    // Backyard horizontal cards
+    renderBackyard(p);
   }
   if (_openPanel) refreshPanel();
   else setupDragDrop();
@@ -214,6 +216,35 @@ function renderZoneTop(p, zone) {
     div.innerHTML = `<img src="${img}" alt="${top.name}">`;
     el.appendChild(div);
   }
+}
+
+function renderBackyard(p) {
+  const s = state[p];
+  const el = document.getElementById(`p${p}-backyard-cards`);
+  if (!el) return;
+  el.innerHTML = '';
+  if (!s || !s.backyard.length) return;
+  const cards = s.backyard;
+  const containerW = el.offsetWidth || 150;
+  const cardW = 40; // approximate card width in px for overlap calc
+  const maxOffset = cards.length > 1 ? Math.min(cardW, (containerW - cardW) / (cards.length - 1)) : 0;
+  cards.forEach((c, i) => {
+    const cm = cardMap[c.number] || {};
+    const img = c.image || cm.image || '';
+    const div = document.createElement('div');
+    div.className = 'card';
+    div.draggable = true;
+    div.dataset.id = c.id;
+    div.dataset.p = p;
+    div.dataset.zone = 'backyard';
+    div.dataset.idx = i;
+    div.style.left = (i * maxOffset) + 'px';
+    div.style.zIndex = i;
+    div.oncontextmenu = (e) => cardMenu(e, c.id);
+    if (img) div.innerHTML = `<img class="card-img" src="${img}">`;
+    else div.innerHTML = `<span class="card-name">${c.name}</span>`;
+    el.appendChild(div);
+  });
 }
 
 function makeCardHtml(card, p, zone, idx) {
@@ -256,7 +287,7 @@ function setupDragDrop() {
     el.addEventListener('dragend', () => { el.classList.remove('dragging'); dragId = null; });
   });
 
-  document.querySelectorAll('.slot[data-p]').forEach(el => {
+  document.querySelectorAll('.slot[data-p], .ex-slot[data-p]').forEach(el => {
     el.addEventListener('dragover', e => { e.preventDefault(); el.classList.add('drag-over'); });
     el.addEventListener('dragleave', () => el.classList.remove('drag-over'));
     el.addEventListener('drop', e => {
@@ -266,7 +297,7 @@ function setupDragDrop() {
     });
   });
 
-  document.querySelectorAll('.zone[data-p]').forEach(el => {
+  document.querySelectorAll('.zone[data-p], .backyard-zone[data-p]').forEach(el => {
     el.addEventListener('dragover', e => { e.preventDefault(); el.classList.add('drag-over'); });
     el.addEventListener('dragleave', () => el.classList.remove('drag-over'));
     el.addEventListener('drop', e => {

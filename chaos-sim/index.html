@@ -14,8 +14,19 @@
 <div class="field" id="field-1">
 <div class="playmat">
   <div class="mat-left">
-    <div class="zone" data-p="1" data-zone="extra" onclick="game.showZone(1,'extra')"><span class="zone-label">EX</span><span class="zone-count" id="p1-extra-count">0</span></div>
-    <div class="zone" data-p="1" data-zone="backyard" onclick="game.showZone(1,'backyard')"><span class="zone-label">バックヤード</span><span class="zone-count" id="p1-backyard-count">0</span></div>
+    <div class="zone-ex" data-p="1">
+      <div class="ex-open">
+        <div class="ex-slot" data-p="1" data-slot="ex-0" id="p1-ex-0"></div>
+        <div class="ex-slot" data-p="1" data-slot="ex-1" id="p1-ex-1"></div>
+        <div class="ex-slot" data-p="1" data-slot="ex-2" id="p1-ex-2"></div>
+        <div class="ex-slot" data-p="1" data-slot="ex-3" id="p1-ex-3"></div>
+      </div>
+      <div class="zone ex-deck" data-p="1" data-zone="extra" onclick="game.showZone(1,'extra')"><span class="zone-label">EX</span><span class="zone-count" id="p1-extra-count">0</span></div>
+    </div>
+    <div class="zone backyard-zone" data-p="1" data-zone="backyard" onclick="game.showZone(1,'backyard')">
+      <span class="zone-label">バックヤード (<span id="p1-backyard-count">0</span>)</span>
+      <div class="backyard-cards" id="p1-backyard-cards"></div>
+    </div>
   </div>
   <div class="mat-center">
     <div class="hand-area" id="p1-hand-area">
@@ -44,8 +55,19 @@
 <div class="field" id="field-0">
 <div class="playmat">
   <div class="mat-left">
-    <div class="zone" data-p="0" data-zone="extra" onclick="game.showZone(0,'extra')"><span class="zone-label">EX</span><span class="zone-count" id="p0-extra-count">0</span></div>
-    <div class="zone" data-p="0" data-zone="backyard" onclick="game.showZone(0,'backyard')"><span class="zone-label">バックヤード</span><span class="zone-count" id="p0-backyard-count">0</span></div>
+    <div class="zone-ex" data-p="0">
+      <div class="ex-open">
+        <div class="ex-slot" data-p="0" data-slot="ex-0" id="p0-ex-0"></div>
+        <div class="ex-slot" data-p="0" data-slot="ex-1" id="p0-ex-1"></div>
+        <div class="ex-slot" data-p="0" data-slot="ex-2" id="p0-ex-2"></div>
+        <div class="ex-slot" data-p="0" data-slot="ex-3" id="p0-ex-3"></div>
+      </div>
+      <div class="zone ex-deck" data-p="0" data-zone="extra" onclick="game.showZone(0,'extra')"><span class="zone-label">EX</span><span class="zone-count" id="p0-extra-count">0</span></div>
+    </div>
+    <div class="zone backyard-zone" data-p="0" data-zone="backyard" onclick="game.showZone(0,'backyard')">
+      <span class="zone-label">バックヤード (<span id="p0-backyard-count">0</span>)</span>
+      <div class="backyard-cards" id="p0-backyard-cards"></div>
+    </div>
   </div>
   <div class="mat-center">
     <div class="stage-row front-row">
@@ -90,6 +112,9 @@
 <!-- Context menu -->
 <div id="ctx-menu" class="context-menu" style="display:none"></div>
 
+<!-- Zoom overlay -->
+<div id="zoom-overlay" style="display:none" onclick="this.style.display='none'"></div>
+
 <!-- Deck select modal -->
 <div id="deck-modal" class="modal">
   <div class="modal-content">
@@ -99,9 +124,6 @@
     <button onclick="startGame()">ゲーム開始</button>
   </div>
 </div>
-
-<!-- Zoom overlay -->
-<div id="zoom-overlay" style="display:none" onclick="this.style.display='none'"></div>
 
 <script src="game.js"></script>
 </body>
