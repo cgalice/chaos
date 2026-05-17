@@ -366,8 +366,8 @@ function deckMenu(e, p) {
   const s = state[p]; if (!s) return;
   showCtxMenu(e, [
     { label: '上からN枚見る', fn() { const n = parseInt(prompt('何枚見る？'), 10); if (n > 0) peekDeck(p, n); } },
-    { label: 'マリガン', fn() { game.mulligan(p); } },
     { label: 'ダメージ', fn() { game.dealDamage(p); } },
+    { label: 'マリガン', fn() { if (confirm('手札を引き直してよいですか？')) game.mulligan(p); } },
   ]);
 }
 
