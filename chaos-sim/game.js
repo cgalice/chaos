@@ -345,13 +345,15 @@ function cardMenu(e, id) {
   }
   if (!card) return;
   const items = [];
-  // Slot cards (field + EX slots): state change
+  // Slot cards (field + EX slots): 6 states
   if (SLOTS.includes(cardZone)) {
     const isEx = cardZone.startsWith('ex-');
-    if (card.state === 'stand') items.push({ label: 'レスト', fn() { card.state = 'rest'; render(); } });
-    if (card.state === 'rest' && !isEx) items.push({ label: 'リバース', fn() { card.state = 'reverse'; render(); } });
-    if (card.state !== 'stand') items.push({ label: 'スタンド', fn() { card.state = 'stand'; render(); } });
-    if (!isEx) items.push({ label: '裏返す', fn() { card.faceUp = !card.faceUp; render(); } });
+    items.push({ label: '表スタンド', fn() { card.faceUp = true; card.state = 'stand'; render(); } });
+    items.push({ label: '表レスト', fn() { card.faceUp = true; card.state = 'rest'; render(); } });
+    if (!isEx) items.push({ label: '表リバース', fn() { card.faceUp = true; card.state = 'reverse'; render(); } });
+    items.push({ label: '裏スタンド', fn() { card.faceUp = false; card.state = 'stand'; render(); } });
+    items.push({ label: '裏レスト', fn() { card.faceUp = false; card.state = 'rest'; render(); } });
+    if (!isEx) items.push({ label: '裏リバース', fn() { card.faceUp = false; card.state = 'reverse'; render(); } });
   }
   items.push({ label: '⚡ 効果発動', fn() { log(`⚡ 効果発動: ${card.name}`); } });
   items.push({ label: '🎯 対象指定', fn() { log(`🎯 対象: ${card.name}`); } });
@@ -482,11 +484,6 @@ function closePeek() {
 
 function zoneMenu(e, p, zone) {
   e.preventDefault();
-  const s = state[p]; if (!s) return;
-  showCtxMenu(e, [
-    { label: '全て見る', fn() { game.showZone(p, zone); } },
-    { label: '全てデッキに戻す', fn() { s.deck.push(...s[zone]); s[zone] = []; shuffle(s.deck); render(); } },
-  ]);
 }
 
 function showCtxMenu(e, items) {
