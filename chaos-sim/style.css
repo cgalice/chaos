@@ -36,9 +36,22 @@ body { background: #1a2332; color: #e8f0ff; font-family: sans-serif; overflow: h
 /* Zone */
 .zone { background: rgba(74,159,212,0.05); border: 1px solid #2a4a6a; border-radius: 4px; text-align: center; cursor: pointer; position: relative; overflow: hidden; flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 0; }
 .zone:hover { border-color: #4a9fd4; }
-.zone-label { font-size: 8px; color: #7ab; pointer-events: none; }
-.zone-count { font-size: 14px; font-weight: bold; color: #e8f0ff; }
+.zone-label { font-size: 8px; color: #7ab; pointer-events: none; z-index: 2; }
+.zone-count { font-size: 14px; font-weight: bold; color: #e8f0ff; z-index: 2; text-shadow: 0 0 4px #000; }
 .zone.drag-over { border-color: #4ad4a0; background: rgba(74,212,160,0.1); }
+
+/* Zone top card (discard/backyard show face-up top) */
+.zone-top-card { position: absolute; inset: 2px; z-index: 1; }
+.zone-top-card img { width: 100%; height: 100%; object-fit: cover; border-radius: 3px; }
+
+/* Deck/EX zones show card back */
+.zone[data-zone="deck"], .zone[data-zone="extra"] {
+  background: linear-gradient(135deg, #0a1a3a 0%, #1a3060 40%, #0d2040 60%, #0a1530 100%);
+}
+.zone[data-zone="deck"]::before, .zone[data-zone="extra"]::before {
+  content: ''; position: absolute; inset: 6px; border: 1px solid rgba(74,159,212,0.4); border-radius: 3px;
+  background: radial-gradient(ellipse at center, rgba(74,159,212,0.15) 0%, transparent 70%);
+}
 
 /* Stage */
 .stage-row { display: flex; gap: 2px; justify-content: center; flex-shrink: 0; }

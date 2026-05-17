@@ -34,7 +34,7 @@
     </div>
   </div>
   <div class="mat-right">
-    <div class="zone" data-p="1" data-zone="backyard"><span class="zone-label">バックヤード</span><span class="zone-count" id="p1-backyard-count">0</span></div>
+    <div class="zone" data-p="1" data-zone="backyard" onclick="game.showZone(1,'backyard')"><span class="zone-label">バックヤード</span><span class="zone-count" id="p1-backyard-count">0</span></div>
     <div class="zone" data-p="1" data-zone="discard" onclick="game.showZone(1,'discard')" oncontextmenu="zoneMenu(event,1,'discard')"><span class="zone-label">控え室</span><span class="zone-count" id="p1-discard-count">0</span></div>
   </div>
 </div>
@@ -64,7 +64,7 @@
     </div>
   </div>
   <div class="mat-right">
-    <div class="zone" data-p="0" data-zone="backyard"><span class="zone-label">バックヤード</span><span class="zone-count" id="p0-backyard-count">0</span></div>
+    <div class="zone" data-p="0" data-zone="backyard" onclick="game.showZone(0,'backyard')"><span class="zone-label">バックヤード</span><span class="zone-count" id="p0-backyard-count">0</span></div>
     <div class="zone" data-p="0" data-zone="discard" onclick="game.showZone(0,'discard')" oncontextmenu="zoneMenu(event,0,'discard')"><span class="zone-label">控え室</span><span class="zone-count" id="p0-discard-count">0</span></div>
   </div>
 </div>

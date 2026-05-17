@@ -190,9 +190,30 @@ function render() {
       const c = s ? s.slots[sl] : null;
       slotEl.innerHTML = c ? makeCardHtml(c, p, sl, 0) : '';
     }
+    // Zone top card display
+    renderZoneTop(p, 'discard');
+    renderZoneTop(p, 'backyard');
   }
   if (_openPanel) refreshPanel();
   else setupDragDrop();
+}
+
+function renderZoneTop(p, zone) {
+  const s = state[p];
+  const el = document.querySelector(`.zone[data-p="${p}"][data-zone="${zone}"]`);
+  if (!el) return;
+  const existing = el.querySelector('.zone-top-card');
+  if (existing) existing.remove();
+  if (!s || !s[zone].length) return;
+  const top = s[zone][s[zone].length - 1];
+  const cm = cardMap[top.number] || {};
+  const img = top.image || cm.image || '';
+  if (img) {
+    const div = document.createElement('div');
+    div.className = 'zone-top-card';
+    div.innerHTML = `<img src="${img}" alt="${top.name}">`;
+    el.appendChild(div);
+  }
 }
 
 function makeCardHtml(card, p, zone, idx) {
