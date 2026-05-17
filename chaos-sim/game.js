@@ -236,12 +236,15 @@ function renderBackyard(p) {
     div.dataset.p = p;
     div.dataset.zone = 'backyard';
     div.dataset.idx = i;
-    if (i >= 4) div.style.marginLeft = `calc(var(--cw) * -1 + 4px)`;
+    // 5枚目以降: 全カードにmargin-right負値で重なる（WSクロック方式）
+    if (cards.length > 4) div.style.marginRight = `calc(var(--cw) * -0.7)`;
     div.oncontextmenu = (e) => cardMenu(e, c.id);
     if (img) div.innerHTML = `<img class="card-img" src="${img}">`;
     else div.innerHTML = `<span class="card-name">${c.name}</span>`;
     el.appendChild(div);
   });
+  // last-childのmarginをリセット
+  if (el.lastChild) el.lastChild.style.marginRight = '0';
 }
 
 function makeCardHtml(card, p, zone, idx) {

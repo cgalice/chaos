@@ -66,7 +66,7 @@ body { background: #1a2332; color: #e8f0ff; font-family: sans-serif; overflow: h
 /* Backyard zone: horizontal overlapping cards */
 .backyard-zone { height: calc(var(--ch) + 8px); flex-shrink: 0; flex-grow: 0; display: flex; overflow: hidden; background: rgba(74,159,212,0.05); border: 1px solid #2a4a6a; border-radius: 4px; padding: 2px; cursor: pointer; position: relative; }
 .backyard-zone .zone-label { position: absolute; bottom: 1px; right: 3px; font-size: 7px; color: #7ab; z-index: 2; pointer-events: none; }
-.backyard-zone .backyard-cards { flex: 1; display: flex; align-items: center; overflow: hidden; }
+.backyard-zone .backyard-cards { flex: 1; display: flex; flex-wrap: nowrap; align-items: center; overflow: hidden; padding: 1px; }
 .backyard-zone .backyard-cards .card { flex-shrink: 0; }
 
 /* Stage */
