@@ -82,7 +82,7 @@ body { background: #1a2332; color: #e8f0ff; font-family: sans-serif; overflow: h
 .front-row { gap: calc(var(--cw) * 0.5); }
 .back-row .slot { border-color: rgba(74,100,212,0.3); }
 .back-row .slot:hover { border-color: #4a6ad4; }
-.slot.partner-slot { border-color: rgba(212,160,74,0.4); width: calc(var(--cw) + 16px); height: calc(var(--sh) + 4px); }
+.slot.partner-slot { border-color: rgba(212,160,74,0.4); width: calc(var(--cw) + 16px); height: calc(var(--sh) + 4px); margin-top: calc(var(--ch) * 0.3); margin-bottom: calc(var(--ch) * -0.3); z-index: 2; }
 .slot.partner-slot:hover { border-color: #d4a04a; }
 
 /* Hand */
