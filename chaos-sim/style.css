@@ -54,7 +54,7 @@ body { background: #1a2332; color: #e8f0ff; font-family: sans-serif; overflow: h
 }
 
 /* EX zone: left=4 open slots, right=deck */
-.zone-ex { flex: 3; display: flex; gap: 2px; min-height: 0; }
+.zone-ex { flex: 1; display: flex; gap: 2px; min-height: 0; }
 .ex-open { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 2px; flex: 1; }
 .ex-slot { background: rgba(74,159,212,0.03); border: 1px dashed rgba(74,159,212,0.25); border-radius: 3px; position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; cursor: pointer; }
 .ex-slot:hover { border-color: #4a9fd4; border-style: solid; }
@@ -63,7 +63,7 @@ body { background: #1a2332; color: #e8f0ff; font-family: sans-serif; overflow: h
 .ex-deck { width: calc(var(--cw) + 8px); flex-shrink: 0; }
 
 /* Backyard zone: horizontal overlapping cards */
-.backyard-zone { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: rgba(74,159,212,0.05); border: 1px solid #2a4a6a; border-radius: 4px; padding: 2px; cursor: pointer; position: relative; }
+.backyard-zone { height: calc(var(--ch) + 8px); flex-shrink: 0; flex-grow: 0; display: flex; flex-direction: column; overflow: hidden; background: rgba(74,159,212,0.05); border: 1px solid #2a4a6a; border-radius: 4px; padding: 2px; cursor: pointer; position: relative; }
 .backyard-zone .zone-label { font-size: 8px; color: #7ab; flex-shrink: 0; }
 .backyard-zone .backyard-cards { flex: 1; display: flex; align-items: center; overflow: hidden; }
 .backyard-zone .backyard-cards .card { flex-shrink: 0; }
