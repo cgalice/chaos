@@ -363,7 +363,6 @@ function deckMenu(e, p) {
   e.preventDefault();
   const s = state[p]; if (!s) return;
   showCtxMenu(e, [
-    { label: 'ドロー', fn() { game.draw(p); } },
     { label: '上からN枚見る', fn() { const n = parseInt(prompt('何枚見る？'), 10); if (n > 0) peekDeck(p, n); } },
     { label: 'マリガン', fn() { game.mulligan(p); } },
     { label: 'ダメージ', fn() { game.dealDamage(p); } },
