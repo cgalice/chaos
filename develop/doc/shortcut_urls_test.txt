@@ -1,3 +1,3 @@
-https://raw.githubusercontent.com/CGAlice/chaos/master/shots/recipe/-recipe-2018_akita.png
-https://raw.githubusercontent.com/CGAlice/chaos/master/shots/recipe/-recipe-2018_kyoto.png
-https://raw.githubusercontent.com/CGAlice/chaos/master/shots/recipe/-recipe-2018_nagoya.png
+https://raw.githubusercontent.com/CGAlice/chaos/master/shots/ocr_input/-recipe-2018_akita_p01.png
+https://raw.githubusercontent.com/CGAlice/chaos/master/shots/ocr_input/-recipe-2018_akita_p02.png
+https://raw.githubusercontent.com/CGAlice/chaos/master/shots/ocr_input/-recipe-2018_kyoto_p01.png
