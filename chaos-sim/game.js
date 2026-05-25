@@ -350,12 +350,12 @@ function cardMenu(e, id) {
     const isEx = cardZone.startsWith('ex-');
     const cols = isEx ? 2 : 3;
     const stateGrid = [
-      { label: '表スタンド', fn() { card.faceUp = true; card.state = 'stand'; render(); } },
-      { label: '表レスト', fn() { card.faceUp = true; card.state = 'rest'; render(); } },
-      ...(!isEx ? [{ label: '表リバース', fn() { card.faceUp = true; card.state = 'reverse'; render(); } }] : []),
-      { label: '裏スタンド', fn() { card.faceUp = false; card.state = 'stand'; render(); } },
-      { label: '裏レスト', fn() { card.faceUp = false; card.state = 'rest'; render(); } },
-      ...(!isEx ? [{ label: '裏リバース', fn() { card.faceUp = false; card.state = 'reverse'; render(); } }] : []),
+      { label: '⬆', title: '表スタンド', fn() { card.faceUp = true; card.state = 'stand'; render(); } },
+      { label: '➡', title: '表レスト', fn() { card.faceUp = true; card.state = 'rest'; render(); } },
+      ...(!isEx ? [{ label: '⬇', title: '表リバース', fn() { card.faceUp = true; card.state = 'reverse'; render(); } }] : []),
+      { label: '⬆', title: '裏スタンド', cls: 'fd', fn() { card.faceUp = false; card.state = 'stand'; render(); } },
+      { label: '➡', title: '裏レスト', cls: 'fd', fn() { card.faceUp = false; card.state = 'rest'; render(); } },
+      ...(!isEx ? [{ label: '⬇', title: '裏リバース', cls: 'fd', fn() { card.faceUp = false; card.state = 'reverse'; render(); } }] : []),
     ];
     items.push({ grid: true, cols, cells: stateGrid });
   }
@@ -497,7 +497,8 @@ function showCtxMenu(e, items) {
     if (it.grid) {
       const html = it.cells.map((c) => {
         const idx = allCells.length; allCells.push(c);
-        return `<div class="ctx-grid-btn" onclick="ctxAction(${idx})">${c.label}</div>`;
+        const cls = 'ctx-grid-btn' + (c.cls ? ' ' + c.cls : '');
+        return `<div class="${cls}" onclick="ctxAction(${idx})" title="${c.title||c.label}">${c.label}</div>`;
       }).join('');
       return `<div class="ctx-grid" style="grid-template-columns:repeat(${it.cols},1fr)">${html}</div>`;
     }

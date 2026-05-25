@@ -128,8 +128,10 @@ body { background: #1a2332; color: #e8f0ff; font-family: sans-serif; overflow: h
 .context-menu div { padding: 5px 12px; cursor: pointer; font-size: 11px; color: #e8f0ff; }
 .context-menu div:hover { background: #243a52; }
 .ctx-grid { display: grid; gap: 2px; padding: 4px; }
-.ctx-grid-btn { padding: 6px 8px; text-align: center; border-radius: 3px; background: #243a52; font-size: 11px; color: #e8f0ff; cursor: pointer; }
-.ctx-grid-btn:hover { background: #2e5070; }
+.ctx-grid-btn { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: 3px; background: #2a4a6a; font-size: 14px; color: #e8f0ff; cursor: pointer; }
+.ctx-grid-btn:hover { background: #3a6a8a; }
+.ctx-grid-btn.fd { background: #1a2a3a; color: #8ab; }
+.ctx-grid-btn.fd:hover { background: #2a3a4a; }
 
 /* N control */
 .n-ctrl { display: flex; align-items: center; gap: 2px; }
