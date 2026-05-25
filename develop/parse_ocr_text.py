@@ -150,28 +150,35 @@ def parse_line(line: str) -> tuple[str, int] | None:
     return card_raw, count
 
 
+# デッキ区切り行のパターン (▶デッキレシピTOPに戻る の OCR揺れ含む)
+_DECK_SEP_RE = re.compile(r"TOP|デッキレシピ|deck.*recipe", re.IGNORECASE)
+
+
 def parse_text_to_decks(text: str) -> list[list[dict]]:
     """
     OCRテキストを複数デッキのリストに変換する。
-    空行・区切り行でデッキを分割する。
+    ▶デッキレシピTOPに戻る または連続空行2行以上でデッキを分割する。
     """
     lines = text.split("\n")
     decks: list[list[dict]] = []
     current: list[dict] = []
-    blank_count = 0
+
+    def _flush():
+        if current:
+            decks.append(current[:])
+            current.clear()
 
     for line in lines:
         stripped = line.strip()
 
         if not stripped:
-            blank_count += 1
-            # 連続空行2行以上 → デッキ区切りとみなす
-            if blank_count >= 2 and current:
-                decks.append(current)
-                current = []
             continue
 
-        blank_count = 0
+        # デッキ区切りマーカー検出 (▶デッキレシピTOPに戻る 等)
+        if _DECK_SEP_RE.search(stripped) and not CARD_NUM_RE.search(stripped):
+            _flush()
+            continue
+
         result = parse_line(stripped)
         if result:
             card_raw, count = result
@@ -179,7 +186,23 @@ def parse_text_to_decks(text: str) -> list[list[dict]]:
             current.append({"number": num, "count": count})
 
     if current:
-        decks.append(current)
+        _flush()
+
+    # デッキ内の重複カードを除去（セクションオーバーラップによる二重登録防止）
+    # 同一カード番号の連続出現をまとめ、全体で最大4枚に制限
+    def _dedup(deck: list[dict]) -> list[dict]:
+        seen: dict[str, int] = {}
+        result = []
+        for card in deck:
+            n = card["number"]
+            cnt = seen.get(n, 0) + card["count"]
+            if seen.get(n, 0) < 4:
+                add = min(card["count"], 4 - seen.get(n, 0))
+                result.append({"number": n, "count": add})
+                seen[n] = cnt
+        return result
+
+    decks = [_dedup(d) for d in decks]
 
     # 枚数合計が3未満のデッキは前のデッキと結合（区切り誤判定の修正）
     merged: list[list[dict]] = []
@@ -190,13 +213,13 @@ def parse_text_to_decks(text: str) -> list[list[dict]]:
         else:
             merged.append(deck)
 
-    # 累積50枚超でデッキを自動分割
+    # 累積50枚超でデッキを自動分割 (TOPマーカー未検出時のフォールバック)
     result_decks: list[list[dict]] = []
     for deck in merged:
         sub: list[dict] = []
         sub_total = 0
         for card in deck:
-            if sub_total >= 48 and card["count"] >= 3 and sub:
+            if sub_total >= 50 and sub:
                 result_decks.append(sub)
                 sub = []
                 sub_total = 0
