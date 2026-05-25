@@ -63,6 +63,43 @@ def normalize_card_number(raw: str) -> tuple[str, bool]:
         t = _apply_digit_fixes(upper[:-1])
         if t in VALID_CARDS_SET:
             return t, True
+    # 6) S/F シリーズの誤認修正 (S/T-, C/F-, S-, ST-, F- など → S/F-)
+    # card_map に F-NNN は存在しないため F-NNN は常に S/F-NNN に変換して安全
+    sf_trial = None
+    if re.match(r'^[A-Z]/[A-Z]-', upper):
+        sf_trial = re.sub(r'^[A-Z]/[A-Z]-', 'S/F-', upper)
+    elif re.match(r'^F-\d', upper):
+        sf_trial = 'S/F-' + upper[2:]
+    elif re.match(r'^S-\d', upper):
+        sf_trial = 'S/F-' + upper[2:]
+    elif re.match(r'^ST-\d', upper):
+        sf_trial = 'S/F-' + upper[3:]
+    if sf_trial and sf_trial != upper and sf_trial in VALID_CARDS_SET:
+        return sf_trial, True
+
+    # 7) PREFIX-PRO## → PREFIX-PR0## (PRのOが数字0に誤認: AU-PRO25 → AU-PR025)
+    if '-PRO' in upper:
+        trial = re.sub(r'-PRO(\d)', r'-PR0\1', upper)
+        if trial != upper and trial in VALID_CARDS_SET:
+            return trial, True
+
+    # 8) ハイフン付きカードのゼロパディング (AU-30 → AU-030)
+    if '-' in upper:
+        parts = upper.rsplit('-', 1)
+        if len(parts) == 2:
+            prefix_part, num_part = parts
+            nm = re.match(r'^(\d+)([A-Z]?)$', num_part)
+            if nm and len(nm.group(1)) < 3:
+                padded = f"{prefix_part}-{nm.group(1).zfill(3)}{nm.group(2)}"
+                if padded in VALID_CARDS_SET:
+                    return padded, True
+
+    # 9) FM シリーズの誤認修正 (FF-, HV- → FM-: card_map に FF-/HV- は存在しない)
+    if re.match(r'^(?:FF|HV)-\d', upper):
+        trial = 'FM-' + upper[3:]
+        if trial in VALID_CARDS_SET:
+            return trial, True
+
     if len(upper) >= 5:
         result = process.extractOne(upper, VALID_CARDS, scorer=fuzz.WRatio,
                                     score_cutoff=FUZZY_CUTOFF)
@@ -76,8 +113,9 @@ def normalize_card_number(raw: str) -> tuple[str, bool]:
 # ---------------------------------------------------------------------------
 
 # カード番号パターン: 2-6文字アルファベット + ハイフン(任意) + 数字3桁前後
+# S/F-NNN 形式 (S/F シリーズ) および PREFIX-PRO### (PR+0が誤認) にも対応
 CARD_NUM_RE = re.compile(
-    r"\b([A-Z]{2,6}-?(?:BPR|PR|T|SP|SD|UD)?[0-9]{1,4}[A-Z]?)\b",
+    r"\b([A-Z]{1,6}(?:/[A-Z])?-?(?:BPR|PRO|PR|T|SP|SD|UD)?[0-9]{1,4}[A-Z]?)\b",
     re.IGNORECASE,
 )
 
