@@ -172,6 +172,18 @@ function showDetail(idx, restoreScroll) {
   </div>`;
   html += `</div></div>`;
 
+  // Card grid preview below
+  html += `<div style="margin-top:16px;border-top:1px solid #3a5a7d;padding-top:12px"><div class="card-grid">`;
+  for (const c of cards) {
+    const info = cardMap[c.number] || {};
+    if (info.image) {
+      html += `<div class="card-item"><img src="${info.image}" loading="lazy"><span class="count">×${c.count}</span><div class="num">${c.number}</div></div>`;
+    } else {
+      html += `<div class="card-item"><div class="no-image">${c.number}</div><span class="count">×${c.count}</span><div class="num">${c.number}</div></div>`;
+    }
+  }
+  html += `</div></div>`;
+
   document.getElementById('detail-content').innerHTML = html;
   document.getElementById('detail').classList.add('active');
   if (restoreScroll) {
