@@ -131,7 +131,7 @@ function showDetail(idx, restoreScroll) {
   const exCls = exTotal === 10 ? 'color:#4c8' : exTotal > 10 ? 'color:#e55' : 'color:#da4';
 
   let html = `<div class="detail-header"><h2>${r.year||'?'}年 ${r.event_type} ${r.location} #${r.rank}</h2><button class="close-btn" onclick="closeDetail()">✕</button></div>`;
-  html += `<p style="margin-bottom:8px;font-size:13px">パートナー: <b>${cm.name||r.partner}</b> (${r.partner})${r.player?' | '+r.player:''} | <span style="${mainCls};font-weight:bold">メイン${mainTotal}/50</span> <span style="${exCls};font-weight:bold">EX${exTotal}/10</span></p>`;
+  html += `<p style="margin-bottom:8px;font-size:13px">パートナー: <b>${cm.name||r.partner}</b> (${r.partner})${r.player?' | '+r.player:''} | <span id="totals-display"><span style="${mainCls};font-weight:bold">メイン${mainTotal}/50</span> <span style="${exCls};font-weight:bold">EX${exTotal}/10</span></span></p>`;
   html += `<div style="display:flex;gap:12px;margin-top:8px">`;
 
   // Left: source image
@@ -181,13 +181,25 @@ function showDetail(idx, restoreScroll) {
 }
 
 function cardRow(idx, i, c) {
-  return `<div style="display:flex;align-items:center;gap:2px;padding:2px 0;border-bottom:1px solid #2a3a4a;font-size:11px">
+  return `<div data-num="${c.number}" style="display:flex;align-items:center;gap:2px;padding:2px 0;border-bottom:1px solid #2a3a4a;font-size:11px">
     <button onclick="editCard(${idx},${i},-1)" style="background:#633;color:#fff;border:none;border-radius:2px;width:18px;height:18px;cursor:pointer;font-size:10px">-</button>
     <span style="width:14px;text-align:center">${c.count}</span>
     <button onclick="editCard(${idx},${i},1)" style="background:#363;color:#fff;border:none;border-radius:2px;width:18px;height:18px;cursor:pointer;font-size:10px">+</button>
     <span style="flex:1;color:#8cf">${c.number}</span>
     <button onclick="removeCard(${idx},${i})" style="background:none;color:#f66;border:none;cursor:pointer;font-size:12px">×</button>
   </div>`;
+}
+
+function updateTotals(idx) {
+  const cards = getEditCards(idx);
+  const mainTotal = cards.filter(c => (cardMap[c.number]||{}).type !== 'extra').reduce((s,c) => s+c.count, 0);
+  const exTotal = cards.filter(c => (cardMap[c.number]||{}).type === 'extra').reduce((s,c) => s+c.count, 0);
+  const el = document.getElementById('totals-display');
+  if (el) {
+    const mc = mainTotal===50?'#4c8':mainTotal>50?'#e55':'#da4';
+    const ec = exTotal===10?'#4c8':exTotal>10?'#e55':'#da4';
+    el.innerHTML = `<span style="color:${mc};font-weight:bold">メイン${mainTotal}/50</span> <span style="color:${ec};font-weight:bold">EX${exTotal}/10</span>`;
+  }
 }
 
 function getEditCards(idx) {
@@ -204,39 +216,54 @@ function saveEditState(idx, cards) {
 }
 
 function editCard(idx, ci, delta) {
-  const cards = getEditCards(idx);
-  cards[ci].count = Math.max(0, cards[ci].count + delta);
-  if (cards[ci].count === 0) cards.splice(ci, 1);
-  saveEditState(idx, cards);
-  const scroll = { main: document.getElementById('edit-list').scrollTop, ex: document.getElementById('edit-list-ex').scrollTop };
-  showDetail(idx, scroll);
+  const el = event.target.closest('div').querySelector('span');
+  let val = parseInt(el.textContent) + delta;
+  if (val < 0) val = 0;
+  el.textContent = val;
 }
 
 function removeCard(idx, ci) {
-  const cards = getEditCards(idx);
-  cards.splice(ci, 1);
-  saveEditState(idx, cards);
-  const scroll = { main: document.getElementById('edit-list').scrollTop, ex: document.getElementById('edit-list-ex').scrollTop };
-  showDetail(idx, scroll);
+  event.target.closest('div[style]').remove();
 }
 
 function addCard(idx) {
   const num = document.getElementById('add-num').value.trim();
   const cnt = parseInt(document.getElementById('add-cnt').value) || 1;
   if (!num) return;
-  const cards = getEditCards(idx);
-  const existing = cards.find(c => c.number === num);
-  if (existing) existing.count += cnt;
-  else cards.push({ number: num, count: cnt });
-  saveEditState(idx, cards);
-  const scroll = { main: document.getElementById('edit-list').scrollTop, ex: document.getElementById('edit-list-ex').scrollTop };
-  showDetail(idx, scroll);
+  // Check if already in list
+  const existing = document.querySelector(`[data-num="${num}"]`);
+  if (existing) {
+    const span = existing.querySelector('span');
+    span.textContent = parseInt(span.textContent) + cnt;
+  } else {
+    const info = cardMap[num] || {};
+    const target = info.type === 'extra' ? 'edit-list-ex' : 'edit-list';
+    document.getElementById(target).insertAdjacentHTML('beforeend',
+      `<div data-num="${num}" style="display:flex;align-items:center;gap:2px;padding:2px 0;border-bottom:1px solid #2a3a4a;font-size:11px">
+        <button onclick="editCard(${idx},0,-1)" style="background:#633;color:#fff;border:none;border-radius:2px;width:18px;height:18px;cursor:pointer;font-size:10px">-</button>
+        <span style="width:14px;text-align:center">${cnt}</span>
+        <button onclick="editCard(${idx},0,1)" style="background:#363;color:#fff;border:none;border-radius:2px;width:18px;height:18px;cursor:pointer;font-size:10px">+</button>
+        <span style="flex:1;color:#8cf">${num}</span>
+        <button onclick="this.closest('[data-num]').remove()" style="background:none;color:#f66;border:none;cursor:pointer;font-size:12px">×</button>
+      </div>`);
+  }
+  document.getElementById('add-num').value = '';
 }
 
 function saveEdit(idx) {
-  const cards = getEditCards(idx);
-  saveEditState(idx, cards);
-  alert('localStorageに保存しました');
+  // Read current state from DOM
+  const cards = [];
+  document.querySelectorAll('#edit-list [data-num], #edit-list-ex [data-num]').forEach(row => {
+    const num = row.dataset.num;
+    const count = parseInt(row.querySelector('span').textContent) || 0;
+    if (count > 0) cards.push({ number: num, count });
+  });
+  // Also include added cards from add input
+  const r = filtered[idx];
+  const edits = JSON.parse(localStorage.getItem('chaos_recipe_edits') || '{}');
+  edits[r.id] = { cards };
+  localStorage.setItem('chaos_recipe_edits', JSON.stringify(edits));
+  alert('保存しました');
 }
 
 function resetEdit(idx) {
