@@ -348,12 +348,16 @@ function cardMenu(e, id) {
   // Slot cards (field + EX slots): 6 states
   if (SLOTS.includes(cardZone)) {
     const isEx = cardZone.startsWith('ex-');
-    items.push({ label: '表スタンド', fn() { card.faceUp = true; card.state = 'stand'; render(); } });
-    items.push({ label: '表レスト', fn() { card.faceUp = true; card.state = 'rest'; render(); } });
-    if (!isEx) items.push({ label: '表リバース', fn() { card.faceUp = true; card.state = 'reverse'; render(); } });
-    items.push({ label: '裏スタンド', fn() { card.faceUp = false; card.state = 'stand'; render(); } });
-    items.push({ label: '裏レスト', fn() { card.faceUp = false; card.state = 'rest'; render(); } });
-    if (!isEx) items.push({ label: '裏リバース', fn() { card.faceUp = false; card.state = 'reverse'; render(); } });
+    const cols = isEx ? 2 : 3;
+    const stateGrid = [
+      { label: '表スタンド', fn() { card.faceUp = true; card.state = 'stand'; render(); } },
+      { label: '表レスト', fn() { card.faceUp = true; card.state = 'rest'; render(); } },
+      ...(!isEx ? [{ label: '表リバース', fn() { card.faceUp = true; card.state = 'reverse'; render(); } }] : []),
+      { label: '裏スタンド', fn() { card.faceUp = false; card.state = 'stand'; render(); } },
+      { label: '裏レスト', fn() { card.faceUp = false; card.state = 'rest'; render(); } },
+      ...(!isEx ? [{ label: '裏リバース', fn() { card.faceUp = false; card.state = 'reverse'; render(); } }] : []),
+    ];
+    items.push({ grid: true, cols, cells: stateGrid });
   }
   items.push({ label: '⚡ 効果発動', fn() { log(`⚡ 効果発動: ${card.name}`); } });
   items.push({ label: '🎯 対象指定', fn() { log(`🎯 対象: ${card.name}`); } });
@@ -488,9 +492,20 @@ function zoneMenu(e, p, zone) {
 
 function showCtxMenu(e, items) {
   const menu = document.getElementById('ctx-menu');
-  menu.innerHTML = items.map((it, i) => `<div onclick="ctxAction(${i})">${it.label}</div>`).join('');
+  let allCells = [];
+  menu.innerHTML = items.map((it) => {
+    if (it.grid) {
+      const html = it.cells.map((c) => {
+        const idx = allCells.length; allCells.push(c);
+        return `<div class="ctx-grid-btn" onclick="ctxAction(${idx})">${c.label}</div>`;
+      }).join('');
+      return `<div class="ctx-grid" style="grid-template-columns:repeat(${it.cols},1fr)">${html}</div>`;
+    }
+    const idx = allCells.length; allCells.push(it);
+    return `<div onclick="ctxAction(${idx})">${it.label}</div>`;
+  }).join('');
   menu.style.left = e.clientX + 'px'; menu.style.top = e.clientY + 'px';
-  menu.style.display = 'block'; menu._items = items;
+  menu.style.display = 'block'; menu._items = allCells;
 }
 function ctxAction(i) {
   const menu = document.getElementById('ctx-menu');
