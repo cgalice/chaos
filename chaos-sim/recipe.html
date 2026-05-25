@@ -128,6 +128,7 @@ function showDetail(idx) {
     }
   }
   html += `</div>`;
+  if (r.source_img) html += `<img src="${r.source_img}" style="max-width:100%;margin-top:16px;border-radius:4px" loading="lazy">`;
   html += `<button class="import-btn" onclick='importDeck(${idx})'>このデッキをインポート</button>`;
   document.getElementById('detail-content').innerHTML = html;
   document.getElementById('detail').classList.add('active');
