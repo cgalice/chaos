@@ -179,14 +179,18 @@ function editCard(idx, ci, delta) {
   cards[ci].count = Math.max(0, cards[ci].count + delta);
   if (cards[ci].count === 0) cards.splice(ci, 1);
   saveEditState(idx, cards);
+  const scrollTop = document.getElementById('edit-list').scrollTop;
   showDetail(idx);
+  document.getElementById('edit-list').scrollTop = scrollTop;
 }
 
 function removeCard(idx, ci) {
   const cards = getEditCards(idx);
   cards.splice(ci, 1);
   saveEditState(idx, cards);
+  const scrollTop = document.getElementById('edit-list').scrollTop;
   showDetail(idx);
+  document.getElementById('edit-list').scrollTop = scrollTop;
 }
 
 function addCard(idx) {
