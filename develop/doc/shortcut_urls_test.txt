@@ -1,3 +1,10 @@
-https://raw.githubusercontent.com/CGAlice/chaos/master/shots/recipe/-recipe-2018_akita.png
-https://raw.githubusercontent.com/CGAlice/chaos/master/shots/recipe/-recipe-2018_kyoto.png
-https://raw.githubusercontent.com/CGAlice/chaos/master/shots/recipe/-recipe-2018_nagoya.png
+https://raw.githubusercontent.com/CGAlice/chaos/master/shots/ocr_input/-recipe-2018_hamamatsu_p01.png
+https://raw.githubusercontent.com/CGAlice/chaos/master/shots/ocr_input/-recipe-2018_hamamatsu_p02.png
+https://raw.githubusercontent.com/CGAlice/chaos/master/shots/ocr_input/-recipe-2018_hamamatsu_p03.png
+https://raw.githubusercontent.com/CGAlice/chaos/master/shots/ocr_input/-recipe-2018_hamamatsu_p04.png
+https://raw.githubusercontent.com/CGAlice/chaos/master/shots/ocr_input/-recipe-2018_kagoshima_p01.png
+https://raw.githubusercontent.com/CGAlice/chaos/master/shots/ocr_input/-recipe-2018_kagoshima_p02.png
+https://raw.githubusercontent.com/CGAlice/chaos/master/shots/ocr_input/-recipe-2018_kyoto_p02.png
+https://raw.githubusercontent.com/CGAlice/chaos/master/shots/ocr_input/-recipe-2018_kyoto_p03.png
+https://raw.githubusercontent.com/CGAlice/chaos/master/shots/ocr_input/-recipe-2018_nagoya_b_p01.png
+https://raw.githubusercontent.com/CGAlice/chaos/master/shots/ocr_input/-recipe-2018_nagoya_b_p02.png
