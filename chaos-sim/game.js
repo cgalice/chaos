@@ -326,6 +326,7 @@ function moveTo(toP, toZone) {
     card.state = 'stand'; card.faceUp = true;
     ds.slots[toZone] = card;
   } else {
+    card.state = 'stand'; card.faceUp = true;
     ds[toZone].push(card);
   }
   dragId = null;
