@@ -209,8 +209,7 @@ function editCard(idx, ci, delta) {
   let val = parseInt(el.textContent) + delta;
   if (val < 0) val = 0;
   el.textContent = val;
-  el.style.color = '#ff0'; el.style.fontWeight = 'bold';
-  setTimeout(() => { el.style.color = ''; el.style.fontWeight = ''; }, 600);
+  el.style.color = '#ff0';
   updateCounts();
 }
 
@@ -244,8 +243,7 @@ function addCard(idx) {
   if (existing) {
     const span = existing.querySelector('span');
     span.textContent = parseInt(span.textContent) + cnt;
-    span.style.color = '#ff0'; span.style.fontWeight = 'bold';
-    setTimeout(() => { span.style.color = ''; span.style.fontWeight = ''; }, 600);
+    span.style.color = '#ff0';
   } else {
     const info = cardMap[num] || {};
     const target = info.type === 'extra' ? 'edit-list-ex' : 'edit-list';
