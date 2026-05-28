@@ -74,10 +74,15 @@ function findAndRemove(id) {
           if (slot.levels.length > 0) return slot.levels.pop();
           return null;
         }
+        // charaを取り出し、levelsの最上位が新charaに昇格
         const c = slot.chara;
-        slot.chara = null;
-        s.discard.push(...slot.levels, ...slot.sets);
-        slot.levels = []; slot.sets = [];
+        if (slot.levels.length > 0) {
+          slot.chara = slot.levels.pop();
+        } else {
+          slot.chara = null;
+          s.discard.push(...slot.sets);
+          slot.sets = [];
+        }
         return c;
       }
       const li = slot.levels.findIndex(c => c.id === id);
@@ -365,10 +370,16 @@ function setupDragDrop() {
   });
 
   document.querySelectorAll('.slot[data-p], .ex-slot[data-p]').forEach(el => {
-    el.addEventListener('dragover', e => { e.preventDefault(); el.classList.add('drag-over'); });
-    el.addEventListener('dragleave', () => el.classList.remove('drag-over'));
+    el.addEventListener('dragover', e => {
+      e.preventDefault();
+      const rect = el.getBoundingClientRect();
+      const isTop = (e.clientY - rect.top) < rect.height / 2;
+      el.classList.remove('drag-over', 'drag-over-top', 'drag-over-bottom');
+      el.classList.add(isTop ? 'drag-over-top' : 'drag-over-bottom');
+    });
+    el.addEventListener('dragleave', () => el.classList.remove('drag-over', 'drag-over-top', 'drag-over-bottom'));
     el.addEventListener('drop', e => {
-      e.preventDefault(); el.classList.remove('drag-over');
+      e.preventDefault(); el.classList.remove('drag-over', 'drag-over-top', 'drag-over-bottom');
       if (!dragId) return;
       const rect = el.getBoundingClientRect();
       const dropHalf = (e.clientY - rect.top) < rect.height / 2 ? 'top' : 'bottom';
@@ -469,8 +480,19 @@ function cardMenu(e, id) {
     const slot = state[cardP].slots[cardZone];
     if (slot.levels.length > 0) items.push({ label: `📚 レベルを見る (${slot.levels.length})`, fn() { showSubCards(cardP, cardZone, 'levels'); } });
     if (slot.sets.length > 0) items.push({ label: `🃏 セットを見る (${slot.sets.length})`, fn() { showSubCards(cardP, cardZone, 'sets'); } });
+    items.push({ label: '🗑 控室に送る', fn() { sendSlotToDiscard(cardP, cardZone); } });
   }
   showCtxMenu(e, items);
+}
+
+function sendSlotToDiscard(p, slotName) {
+  const s = state[p]; if (!s) return;
+  const slot = s.slots[slotName];
+  if (slot.chara) s.discard.push(slot.chara);
+  s.discard.push(...slot.levels, ...slot.sets);
+  slot.chara = null; slot.levels = []; slot.sets = [];
+  log(`P${p+1} ${slotName} → 控室`);
+  render();
 }
 
 function showSubCards(p, slotName, type) {

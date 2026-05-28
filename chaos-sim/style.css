@@ -63,6 +63,8 @@ body { background: #1a2332; color: #e8f0ff; font-family: sans-serif; overflow: h
 .ex-slot { background: rgba(74,159,212,0.03); border: 1px dashed rgba(74,159,212,0.25); border-radius: 3px; position: relative; display: flex; align-items: center; justify-content: center; overflow: visible; cursor: pointer; }
 .ex-slot:hover { border-color: #4a9fd4; border-style: solid; }
 .ex-slot.drag-over { border-color: #4ad4a0; border-style: solid; }
+.ex-slot.drag-over-top { border-top: 2px solid #4ad4a0; background: linear-gradient(to bottom, rgba(74,212,160,0.2) 0%, rgba(74,212,160,0.2) 50%, transparent 50%); }
+.ex-slot.drag-over-bottom { border-bottom: 2px solid #d4a04a; background: linear-gradient(to bottom, transparent 50%, rgba(212,160,74,0.2) 50%); }
 .ex-slot .card { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); }
 .ex-slot .card.rest { transform: translate(-50%, -50%) rotate(90deg); }
 .ex-deck { width: calc(var(--cw) + 4px); flex-shrink: 0; }
@@ -78,6 +80,8 @@ body { background: #1a2332; color: #e8f0ff; font-family: sans-serif; overflow: h
 .slot { width: calc(var(--cw) + 12px); height: var(--sh); background: rgba(74,159,212,0.03); border: 1px dashed #2a4a6a; border-radius: 3px; position: relative; cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center; overflow: visible; }
 .slot:hover { border-color: #4a9fd4; border-style: solid; }
 .slot.drag-over { border-color: #4ad4a0; border-style: solid; background: rgba(74,212,160,0.1); }
+.slot.drag-over-top { border-top: 2px solid #4ad4a0; background: linear-gradient(to bottom, rgba(74,212,160,0.2) 0%, rgba(74,212,160,0.2) 50%, transparent 50%); }
+.slot.drag-over-bottom { border-bottom: 2px solid #d4a04a; background: linear-gradient(to bottom, transparent 50%, rgba(212,160,74,0.2) 50%); }
 .slot .card { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1; }
 .slot .card.rest { transform: translate(-50%, -50%) rotate(90deg); }
 .slot .card.reverse { transform: translate(-50%, -50%) rotate(180deg); }
