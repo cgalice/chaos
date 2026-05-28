@@ -147,5 +147,5 @@ body { background: #1a2332; color: #e8f0ff; font-family: sans-serif; overflow: h
 
 /* Zoom overlay */
 #zoom-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 300; display: flex; align-items: center; justify-content: center; flex-direction: column; cursor: pointer; }
-#zoom-overlay img { max-height: 80vh; max-width: 90vw; border-radius: 6px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); transform: scale(1.8); }
+#zoom-overlay img { max-height: 80vh; max-width: 90vw; border-radius: 6px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); transform: scale(1.4); }
 #zoom-overlay .zoom-name { margin-top: 8px; color: #e8f0ff; font-size: 14px; text-align: center; }

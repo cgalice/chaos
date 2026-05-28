@@ -371,8 +371,15 @@ function setupDragDrop() {
       el.classList.add('dragging');
       e.dataTransfer.setData('text/plain', el.dataset.id);
       e.dataTransfer.effectAllowed = 'move';
+      // スロット内カードのドラッグ中、他のスロット内カードがドロップを遮らないようにする
+      requestAnimationFrame(() => {
+        document.querySelectorAll('.slot .card, .ex-slot .card').forEach(c => { c.style.pointerEvents = 'none'; });
+      });
     });
-    el.addEventListener('dragend', () => { el.classList.remove('dragging'); dragId = null; });
+    el.addEventListener('dragend', () => {
+      el.classList.remove('dragging'); dragId = null;
+      document.querySelectorAll('.slot .card, .ex-slot .card').forEach(c => { c.style.pointerEvents = ''; });
+    });
   });
 }
 
