@@ -69,9 +69,13 @@ function findAndRemove(id) {
     for (const sl of SLOTS) {
       const slot = s.slots[sl];
       if (slot.chara && slot.chara.id === id) {
+        // パートナーは舞台から移動不可。レベルカードの一番上を代わりに移動
+        if (sl === 'partner') {
+          if (slot.levels.length > 0) return slot.levels.pop();
+          return null;
+        }
         const c = slot.chara;
         slot.chara = null;
-        // Send levels and sets to discard
         s.discard.push(...slot.levels, ...slot.sets);
         slot.levels = []; slot.sets = [];
         return c;
