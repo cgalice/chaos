@@ -330,7 +330,7 @@ function makeSlotCardHtml(card, slot, p, slotName) {
   if (card.faceUp && img) inner += `<img class="card-img" src="${img}" alt="${card.name}" loading="lazy">`;
   if (card.faceUp && !img) inner += `<span class="card-name">${card.name}</span>`;
   const lvl = slot.levels.length;
-  if (lvl > 0) inner += `<span class="level-badge">Lv${lvl}</span>`;
+  if (lvl > 0) inner += `<span class="level-badge">Lv${lvl + 1}</span>`;
   if (card.damage > 0) inner += `<span class="dmg-badge">${card.damage}</span>`;
   if (slot.sets.length > 0) inner += `<span class="set-badge">S${slot.sets.length}</span>`;
   // ATK/BP display
@@ -414,21 +414,21 @@ function moveTo(toP, toZone, dropHalf) {
   if (SLOTS.includes(toZone)) {
     const slot = ds.slots[toZone];
     const cm = cardMap[card.number] || {};
-    // Set card → add to sets
-    if (cm.type === 'set' && slot.chara) {
-      slot.sets.push(card);
+    // イベント/セットは舞台に置けない（セットは既存charaへのセットのみ）
+    if (cm.type === 'event') {
+      ds.hand.push(card);
+    } else if (cm.type === 'set') {
+      if (slot.chara) slot.sets.push(card);
+      else ds.hand.push(card);
     } else if (slot.chara) {
-      // 上半分: ユニット（新カードが上、元charaがlevelsへ）
       if (dropHalf === 'top') {
         slot.levels.push(slot.chara);
         card.state = 'stand'; card.faceUp = true;
         slot.chara = card;
       } else {
-        // 下半分: レベルカードとして追加
         slot.levels.push(card);
       }
     } else {
-      // 空スロットに配置
       card.state = 'stand'; card.faceUp = true;
       slot.chara = card;
     }
@@ -480,7 +480,7 @@ function cardMenu(e, id) {
     const slot = state[cardP].slots[cardZone];
     if (slot.levels.length > 0) items.push({ label: `📚 レベルを見る (${slot.levels.length})`, fn() { showSubCards(cardP, cardZone, 'levels'); } });
     if (slot.sets.length > 0) items.push({ label: `🃏 セットを見る (${slot.sets.length})`, fn() { showSubCards(cardP, cardZone, 'sets'); } });
-    items.push({ label: '🗑 控室に送る', fn() { sendSlotToDiscard(cardP, cardZone); } });
+    if (cardZone !== 'partner') items.push({ label: '🗑 控室に送る', fn() { sendSlotToDiscard(cardP, cardZone); } });
   }
   showCtxMenu(e, items);
 }
