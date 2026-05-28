@@ -12,8 +12,48 @@ function nextId() { return ++_cardId; }
 const state = [null, null];
 let _openPanel = null; // {p, zone}
 
+function newSlot() { return { chara: null, levels: [], sets: [] }; }
+
 function newPlayerState() {
-  return { deck: [], extra: [], hand: [], discard: [], backyard: [], slots: { partner: null, 'front-l': null, 'front-r': null, 'back-l': null, 'back-r': null, 'ex-0': null, 'ex-1': null, 'ex-2': null, 'ex-3': null } };
+  return { deck: [], extra: [], hand: [], discard: [], backyard: [], slots: { partner: newSlot(), 'front-l': newSlot(), 'front-r': newSlot(), 'back-l': newSlot(), 'back-r': newSlot(), 'ex-0': newSlot(), 'ex-1': newSlot(), 'ex-2': newSlot(), 'ex-3': newSlot() } };
+}
+
+// --- Status calculation ---
+function parseMod(v) { const n = parseInt(v, 10); return isNaN(n) ? 0 : n; }
+
+function calcStats(slot, slotName) {
+  const c = slot.chara;
+  if (!c) return null;
+  const cm = cardMap[c.number] || {};
+  const baseAtk = parseMod(cm.atk);
+  const baseBp = parseMod(cm.bp);
+  const isPartner = slotName === 'partner';
+  const isExtra = (cm.type === 'extra');
+  // Level cards contribution
+  let lvAtk = 0, lvBp = 0;
+  for (const lc of slot.levels) {
+    const lcm = cardMap[lc.number] || {};
+    lvAtk += parseMod(lcm.atk_mod);
+    lvBp += parseMod(lcm.bp_mod);
+  }
+  // Set cards contribution
+  let setAtk = 0, setBp = 0;
+  for (const sc of slot.sets) {
+    const scm = cardMap[sc.number] || {};
+    setAtk += parseMod(scm.atk_mod);
+    setBp += parseMod(scm.bp_mod);
+  }
+  // Partner: 記載atk = Lv0値。レベルアップ毎にレベルカードのmod加算
+  // Extra: 自身のmod適用 + レベルカードmod + セットmod
+  // Friend: 基本値 + セットmodのみ（自身のmodは適用されない）
+  let atk = baseAtk + lvAtk + setAtk;
+  let bp = baseBp + lvBp + setBp;
+  if (isExtra && slot.levels.length === 0) {
+    // エクストラキャラ自身のmodはLv0時に1回分適用
+    atk += parseMod(cm.atk_mod);
+    bp += parseMod(cm.bp_mod);
+  }
+  return { atk, bp };
 }
 
 function findAndRemove(id) {
@@ -25,11 +65,19 @@ function findAndRemove(id) {
       if (idx >= 0) return s[z].splice(idx, 1)[0];
     }
     for (const sl of SLOTS) {
-      if (s.slots[sl] && s.slots[sl].id === id) {
-        const c = s.slots[sl];
-        s.slots[sl] = null;
+      const slot = s.slots[sl];
+      if (slot.chara && slot.chara.id === id) {
+        const c = slot.chara;
+        slot.chara = null;
+        // Send levels and sets to discard
+        s.discard.push(...slot.levels, ...slot.sets);
+        slot.levels = []; slot.sets = [];
         return c;
       }
+      const li = slot.levels.findIndex(c => c.id === id);
+      if (li >= 0) return slot.levels.splice(li, 1)[0];
+      const si = slot.sets.findIndex(c => c.id === id);
+      if (si >= 0) return slot.sets.splice(si, 1)[0];
     }
   }
   return null;
@@ -61,7 +109,7 @@ const game = {
   },
   standAll(p) {
     if (!state[p]) return;
-    for (const sl of SLOTS) { const c = state[p].slots[sl]; if (c) c.state = 'stand'; }
+    for (const sl of SLOTS) { const c = state[p].slots[sl].chara; if (c) c.state = 'stand'; }
     log(`P${p+1} 全スタンド`);
     render();
   },
@@ -75,13 +123,11 @@ const game = {
     while (remaining > 0) {
       if (s.deck.length === 0) { log('デッキ切れ！', 'damage'); break; }
       const card = s.deck.pop();
-      const partner = s.slots.partner;
+      const partner = s.slots.partner.chara;
       if (partner && card.name === partner.name) {
         log(`★ ${card.name} → キャンセル!`, 'cancel');
-        partner.level = (partner.level || 0) + 1;
+        s.slots.partner.levels.push(card);
         partner.state = 'stand'; partner.damage = 0; partner.faceUp = true;
-        partner.levelCards = partner.levelCards || [];
-        partner.levelCards.push(card);
         remaining = 0;
       } else {
         s.discard.push(card);
@@ -148,7 +194,7 @@ function startGame() {
     (deck.cards || []).forEach(entry => {
       const num = entry.number, cm = cardMap[num] || {};
       for (let i = 0; i < (entry.count || 1); i++) {
-        const c = { id: nextId(), number: num, name: cm.name || num, image: cm.image || '', state: 'stand', faceUp: true, level: 0, damage: 0, levelCards: [] };
+        const c = { id: nextId(), number: num, name: cm.name || num, image: cm.image || '', state: 'stand', faceUp: true, damage: 0 };
         if (isExtraCard(num)) extraCards.push(c); else mainCards.push(c);
       }
     });
@@ -156,7 +202,7 @@ function startGame() {
     const partnerNum = deck.partner;
     let pi = partnerNum ? mainCards.findIndex(c => c.number === partnerNum) : 0;
     if (pi < 0) pi = 0;
-    if (mainCards.length > 0) state[p].slots.partner = mainCards.splice(pi, 1)[0];
+    if (mainCards.length > 0) state[p].slots.partner.chara = mainCards.splice(pi, 1)[0];
     shuffle(mainCards);
     state[p].deck = mainCards;
     for (let i = 0; i < 5 && state[p].deck.length > 0; i++) state[p].hand.push(state[p].deck.pop());
@@ -189,8 +235,9 @@ function render() {
     for (const sl of SLOTS) {
       const slotEl = document.getElementById(`p${p}-${sl}`);
       if (!slotEl) continue;
-      const c = s ? s.slots[sl] : null;
-      slotEl.innerHTML = c ? makeCardHtml(c, p, sl, 0) : '';
+      const slot = s ? s.slots[sl] : null;
+      const c = slot ? slot.chara : null;
+      slotEl.innerHTML = c ? makeSlotCardHtml(c, slot, p, sl) : '';
     }
     // Discard top card
     renderZoneTop(p, 'discard');
@@ -257,9 +304,30 @@ function makeCardHtml(card, p, zone, idx) {
   let inner = '';
   if (card.faceUp && img) inner += `<img class="card-img" src="${img}" alt="${card.name}" loading="lazy">`;
   if (card.faceUp && !img) inner += `<span class="card-name">${card.name}</span>`;
-  if (card.level > 0) inner += `<span class="level-badge">Lv${card.level}</span>`;
   if (card.damage > 0) inner += `<span class="dmg-badge">${card.damage}</span>`;
   return `<div class="${cls.join(' ')}" draggable="true" data-id="${card.id}" data-p="${p}" data-zone="${zone}" data-idx="${idx}" oncontextmenu="cardMenu(event,${card.id})">${inner}</div>`;
+}
+
+function makeSlotCardHtml(card, slot, p, slotName) {
+  const cls = ['card'];
+  if (!card.faceUp) cls.push('face-down');
+  if (card.state === 'rest') cls.push('rest');
+  if (card.state === 'reverse') cls.push('reverse');
+  const cm = cardMap[card.number] || {};
+  const img = card.image || cm.image || '';
+  let inner = '';
+  if (card.faceUp && img) inner += `<img class="card-img" src="${img}" alt="${card.name}" loading="lazy">`;
+  if (card.faceUp && !img) inner += `<span class="card-name">${card.name}</span>`;
+  const lvl = slot.levels.length;
+  if (lvl > 0) inner += `<span class="level-badge">Lv${lvl}</span>`;
+  if (card.damage > 0) inner += `<span class="dmg-badge">${card.damage}</span>`;
+  if (slot.sets.length > 0) inner += `<span class="set-badge">S${slot.sets.length}</span>`;
+  // ATK/BP display
+  if (card.faceUp) {
+    const stats = calcStats(slot, slotName);
+    if (stats) inner += `<span class="stat-badge"><span class="stat-atk">${stats.atk}</span>/<span class="stat-bp">${stats.bp}</span></span>`;
+  }
+  return `<div class="${cls.join(' ')}" draggable="true" data-id="${card.id}" data-p="${p}" data-zone="${slotName}" data-idx="0" oncontextmenu="cardMenu(event,${card.id})">${inner}</div>`;
 }
 
 // --- Card zoom ---
@@ -322,9 +390,31 @@ function moveTo(toP, toZone) {
   if (!ds) { dragId = null; return; }
 
   if (SLOTS.includes(toZone)) {
-    if (ds.slots[toZone]) ds.discard.push(ds.slots[toZone]);
-    card.state = 'stand'; card.faceUp = true;
-    ds.slots[toZone] = card;
+    const slot = ds.slots[toZone];
+    const cm = cardMap[card.number] || {};
+    // Set card → add to sets
+    if (cm.type === 'set' && slot.chara) {
+      slot.sets.push(card);
+    }
+    // Same name as current chara (level up for partner) or extra over existing
+    else if (slot.chara && cm.type === 'extra') {
+      // Extra over existing: old chara becomes level card
+      slot.levels.push(slot.chara);
+      card.state = 'stand'; card.faceUp = true;
+      slot.chara = card;
+    } else if (slot.chara && slot.chara.name === card.name && toZone === 'partner') {
+      // Partner level up
+      slot.levels.push(card);
+      slot.chara.state = 'stand'; slot.chara.damage = 0; slot.chara.faceUp = true;
+    } else {
+      // Replace: send existing to discard
+      if (slot.chara) {
+        ds.discard.push(slot.chara, ...slot.levels, ...slot.sets);
+        slot.levels = []; slot.sets = [];
+      }
+      card.state = 'stand'; card.faceUp = true;
+      slot.chara = card;
+    }
   } else {
     card.state = 'stand'; card.faceUp = true;
     ds[toZone].push(card);
@@ -341,7 +431,12 @@ function cardMenu(e, id) {
     const s = state[p]; if (!s) continue;
     for (const z of ZONES) { if (s[z].find(c => c.id === id)) { card = s[z].find(c => c.id === id); cardP = p; cardZone = z; break; } }
     if (card) break;
-    for (const sl of SLOTS) { if (s.slots[sl] && s.slots[sl].id === id) { card = s.slots[sl]; cardP = p; cardZone = sl; break; } }
+    for (const sl of SLOTS) {
+      const slot = s.slots[sl];
+      if (slot.chara && slot.chara.id === id) { card = slot.chara; cardP = p; cardZone = sl; break; }
+      if (slot.levels.find(c => c.id === id)) { card = slot.levels.find(c => c.id === id); cardP = p; cardZone = sl; break; }
+      if (slot.sets.find(c => c.id === id)) { card = slot.sets.find(c => c.id === id); cardP = p; cardZone = sl; break; }
+    }
     if (card) break;
   }
   if (!card) return;
