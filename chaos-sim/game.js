@@ -43,13 +43,15 @@ function calcStats(slot, slotName) {
     setAtk += parseMod(scm.atk_mod);
     setBp += parseMod(scm.bp_mod);
   }
-  // Partner: 記載atk = Lv0値。レベルアップ毎にレベルカードのmod加算
-  // Extra: 自身のmod適用 + レベルカードmod + セットmod
+  // Partner: 記載atk + 自身のmod1回分(Lv0から) + レベルカードmod + セットmod
+  // Extra: 自身のmod適用(Lv0時) + レベルカードmod + セットmod
   // Friend: 基本値 + セットmodのみ（自身のmodは適用されない）
   let atk = baseAtk + lvAtk + setAtk;
   let bp = baseBp + lvBp + setBp;
-  if (isExtra && slot.levels.length === 0) {
-    // エクストラキャラ自身のmodはLv0時に1回分適用
+  if (isPartner) {
+    atk += parseMod(cm.atk_mod);
+    bp += parseMod(cm.bp_mod);
+  } else if (isExtra && slot.levels.length === 0) {
     atk += parseMod(cm.atk_mod);
     bp += parseMod(cm.bp_mod);
   }
@@ -325,7 +327,10 @@ function makeSlotCardHtml(card, slot, p, slotName) {
   // ATK/BP display
   if (card.faceUp) {
     const stats = calcStats(slot, slotName);
-    if (stats) inner += `<span class="stat-badge"><span class="stat-atk">${stats.atk}</span>/<span class="stat-bp">${stats.bp}</span></span>`;
+    if (stats) {
+      inner += `<span class="stat-atk">${stats.atk}</span>`;
+      inner += `<span class="stat-bp">${stats.bp}</span>`;
+    }
   }
   return `<div class="${cls.join(' ')}" draggable="true" data-id="${card.id}" data-p="${p}" data-zone="${slotName}" data-idx="0" oncontextmenu="cardMenu(event,${card.id})">${inner}</div>`;
 }
@@ -407,13 +412,18 @@ function moveTo(toP, toZone) {
       slot.levels.push(card);
       slot.chara.state = 'stand'; slot.chara.damage = 0; slot.chara.faceUp = true;
     } else {
-      // Replace: send existing to discard
-      if (slot.chara) {
-        ds.discard.push(slot.chara, ...slot.levels, ...slot.sets);
-        slot.levels = []; slot.sets = [];
+      // パートナースロットは圧殺禁止（同名レベルアップ/エクストラ/セット以外は不可）
+      if (toZone === 'partner' && slot.chara) {
+        log('パートナーは圧殺できません');
+        ds.hand.push(card);
+      } else {
+        if (slot.chara) {
+          ds.discard.push(slot.chara, ...slot.levels, ...slot.sets);
+          slot.levels = []; slot.sets = [];
+        }
+        card.state = 'stand'; card.faceUp = true;
+        slot.chara = card;
       }
-      card.state = 'stand'; card.faceUp = true;
-      slot.chara = card;
     }
   } else {
     card.state = 'stand'; card.faceUp = true;
@@ -458,7 +468,27 @@ function cardMenu(e, id) {
   items.push({ label: '⚡ 効果発動', fn() { log(`⚡ 効果発動: ${card.name}`); } });
   items.push({ label: '🎯 対象指定', fn() { log(`🎯 対象: ${card.name}`); } });
   items.push({ label: '🔍 拡大表示', fn() { showZoom(card); } });
+  // Slot-specific: view levels / sets
+  if (SLOTS.includes(cardZone)) {
+    const slot = state[cardP].slots[cardZone];
+    if (slot.levels.length > 0) items.push({ label: `📚 レベルを見る (${slot.levels.length})`, fn() { showSubCards(cardP, cardZone, 'levels'); } });
+    if (slot.sets.length > 0) items.push({ label: `🃏 セットを見る (${slot.sets.length})`, fn() { showSubCards(cardP, cardZone, 'sets'); } });
+  }
   showCtxMenu(e, items);
+}
+
+function showSubCards(p, slotName, type) {
+  const slot = state[p].slots[slotName];
+  const cards = slot[type];
+  if (!cards.length) return;
+  const label = type === 'levels' ? 'レベルカード' : 'セットカード';
+  _openPanel = null;
+  const panel = document.getElementById('zone-panel');
+  document.getElementById('zone-panel-title').textContent = `P${p+1} ${slotName} ${label} (${cards.length})`;
+  const ct = document.getElementById('zone-panel-cards');
+  ct.innerHTML = cards.map((c, i) => makeCardHtml(c, p, slotName, i)).join('');
+  panel.style.display = 'flex';
+  setupDragDrop();
 }
 
 function deckMenu(e, p) {
