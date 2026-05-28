@@ -259,8 +259,8 @@ function render() {
     renderBackyard(p);
   }
   if (_openPanel) refreshPanel();
-  else if (_subCardState) showSubCards(_subCardState.p, _subCardState.slotName, _subCardState.type);
   else setupDragDrop();
+  if (_subCardState) refreshSubCards();
   initDropTargets();
 }
 
@@ -372,7 +372,7 @@ function setupDragDrop() {
       e.dataTransfer.setData('text/plain', el.dataset.id);
       e.dataTransfer.effectAllowed = 'move';
     });
-    el.addEventListener('dragend', () => { el.classList.remove('dragging'); });
+    el.addEventListener('dragend', () => { el.classList.remove('dragging'); dragId = null; });
   });
 }
 
@@ -506,6 +506,17 @@ function sendSlotToDiscard(p, slotName) {
   slot.chara = null; slot.levels = []; slot.sets = [];
   log(`P${p+1} ${slotName} → 控室`);
   render();
+}
+
+function refreshSubCards() {
+  if (!_subCardState) return;
+  const { p, slotName, type } = _subCardState;
+  const slot = state[p] && state[p].slots[slotName];
+  if (!slot || !slot[type].length) { _subCardState = null; document.getElementById('zone-panel').style.display = 'none'; return; }
+  const label = type === 'levels' ? 'レベルカード' : 'セットカード';
+  document.getElementById('zone-panel-title').textContent = `P${p+1} ${slotName} ${label} (${slot[type].length})`;
+  document.getElementById('zone-panel-cards').innerHTML = slot[type].map((c, i) => makeCardHtml(c, p, slotName, i)).join('');
+  document.getElementById('zone-panel').style.display = 'flex';
 }
 
 function showSubCards(p, slotName, type) {
