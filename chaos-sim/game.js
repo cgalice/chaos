@@ -353,7 +353,7 @@ function makeSlotCardHtml(card, slot, p, slotName) {
 function showZoom(card) {
   if (!card || !card.faceUp) return;
   const cm = cardMap[card.number] || {};
-  const img = (card.image || cm.image || '').replace('100_140', '200_280');
+  const img = (card.image || cm.image || '').replace('100_140', '400_560');
   if (!img) return;
   const overlay = document.getElementById('zoom-overlay');
   overlay.innerHTML = `<img src="${img}" alt="${card.name}"><div class="zoom-name">${card.name}<br><small>${card.number}</small></div>`;
@@ -515,7 +515,9 @@ function refreshSubCards() {
   if (!slot || !slot[type].length) { _subCardState = null; document.getElementById('zone-panel').style.display = 'none'; return; }
   const label = type === 'levels' ? 'レベルカード' : 'セットカード';
   document.getElementById('zone-panel-title').textContent = `P${p+1} ${slotName} ${label} (${slot[type].length})`;
-  document.getElementById('zone-panel-cards').innerHTML = slot[type].map((c, i) => makeCardHtml(c, p, slotName, i)).join('');
+  const ct = document.getElementById('zone-panel-cards');
+  ct.innerHTML = slot[type].map((c, i) => makeCardHtml(c, p, slotName, i)).join('');
+  ct.querySelectorAll('.card').forEach(el => { el.oncontextmenu = e => { e.preventDefault(); showZoom(slot[type][+el.dataset.idx]); }; });
   document.getElementById('zone-panel').style.display = 'flex';
 }
 
@@ -530,6 +532,7 @@ function showSubCards(p, slotName, type) {
   document.getElementById('zone-panel-title').textContent = `P${p+1} ${slotName} ${label} (${cards.length})`;
   const ct = document.getElementById('zone-panel-cards');
   ct.innerHTML = cards.map((c, i) => makeCardHtml(c, p, slotName, i)).join('');
+  ct.querySelectorAll('.card').forEach(el => { el.oncontextmenu = e => { e.preventDefault(); showZoom(cards[+el.dataset.idx]); }; });
   panel.style.display = 'flex';
   setupDragDrop();
 }
