@@ -353,7 +353,7 @@ function makeSlotCardHtml(card, slot, p, slotName) {
 function showZoom(card) {
   if (!card || !card.faceUp) return;
   const cm = cardMap[card.number] || {};
-  const img = (card.image || cm.image || '').replace('100_140', '400_560');
+  const img = (card.image || cm.image || '').replace('100_140', '200_280');
   if (!img) return;
   const overlay = document.getElementById('zoom-overlay');
   overlay.innerHTML = `<img src="${img}" alt="${card.name}"><div class="zoom-name">${card.name}<br><small>${card.number}</small></div>`;
