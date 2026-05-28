@@ -110,7 +110,7 @@ body { background: #1a2332; color: #e8f0ff; font-family: sans-serif; overflow: h
 .card.dragging { opacity: 0.3; }
 .card .level-badge { position: absolute; top: 1px; right: 1px; background: #d4a04a; color: #000; font-size: 8px; padding: 0 3px; border-radius: 2px; font-weight: bold; }
 .card .dmg-badge { position: absolute; top: 1px; left: 1px; background: #d44a4a; color: #fff; font-size: 8px; padding: 0 3px; border-radius: 2px; }
-.card .set-badge { position: absolute; top: 1px; left: 1px; background: #7b4ad4; color: #fff; font-size: 8px; padding: 0 3px; border-radius: 2px; }
+.card .set-badge { position: absolute; top: 12px; left: 1px; background: #7b4ad4; color: #fff; font-size: 8px; padding: 0 3px; border-radius: 2px; }
 .card .stat-atk { position: absolute; bottom: 1px; left: 1px; background: rgba(0,0,0,0.8); color: #ff9a4a; font-size: 11px; font-weight: bold; padding: 0 3px; border-radius: 2px; }
 .card .stat-bp { position: absolute; bottom: 1px; right: 1px; background: rgba(0,0,0,0.8); color: #4ad4a0; font-size: 11px; font-weight: bold; padding: 0 3px; border-radius: 2px; }
 

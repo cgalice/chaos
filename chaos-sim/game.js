@@ -1,7 +1,10 @@
 'use strict';
 
 let cardMap = {};
-fetch('card_map.json').then(r => r.json()).then(d => { cardMap = d; }).catch(() => {});
+fetch('card_map.json').then(r => r.json()).then(d => { cardMap = d; }).catch(() => {
+  const el = document.getElementById('log');
+  if (el) el.innerHTML = '<div class="entry damage">⚠ card_map.json の読み込みに失敗しました</div>' + el.innerHTML;
+});
 
 const SLOTS = ['partner', 'front-l', 'front-r', 'back-l', 'back-r', 'ex-0', 'ex-1', 'ex-2', 'ex-3'];
 const ZONES = ['deck', 'extra', 'hand', 'discard', 'backyard'];
@@ -43,15 +46,12 @@ function calcStats(slot, slotName) {
     setAtk += parseMod(scm.atk_mod);
     setBp += parseMod(scm.bp_mod);
   }
-  // Partner: 記載atk + 自身のmod1回分(Lv0から) + レベルカードmod + セットmod
-  // Extra: 自身のmod適用(Lv0時) + レベルカードmod + セットmod
-  // Friend: 基本値 + セットmodのみ（自身のmodは適用されない）
+  // Partner: 記載atk + 自身のmod1回分 + レベルカードmod + セットmod
+  // Extra: 記載atk + 自身のmod1回分 + レベルカードmod + セットmod
+  // Friend: 基本値 + レベルカードmod + セットmod（自身のmodは適用されない）
   let atk = baseAtk + lvAtk + setAtk;
   let bp = baseBp + lvBp + setBp;
-  if (isPartner) {
-    atk += parseMod(cm.atk_mod);
-    bp += parseMod(cm.bp_mod);
-  } else if (isExtra && slot.levels.length === 0) {
+  if (isPartner || isExtra) {
     atk += parseMod(cm.atk_mod);
     bp += parseMod(cm.bp_mod);
   }
@@ -96,6 +96,7 @@ function findAndRemove(id) {
 
 const game = {
   draw(p) {
+    if (_peekState) return;
     const s = state[p];
     if (!s || s.deck.length === 0) { log('デッキが空です', 'damage'); return; }
     s.hand.push(s.deck.pop());
@@ -113,6 +114,7 @@ const game = {
     render();
   },
   shuffle(p) {
+    if (_peekState) return;
     if (!state[p]) return;
     shuffle(state[p].deck);
     log(`P${p+1} シャッフル`);
@@ -125,6 +127,7 @@ const game = {
     render();
   },
   dealDamage(p, n) {
+    if (_peekState) return;
     const s = state[p];
     if (!s) return;
     if (!n) n = parseInt(prompt('ダメージ量:'), 10);
@@ -138,7 +141,6 @@ const game = {
       if (partner && card.name === partner.name) {
         log(`★ ${card.name} → キャンセル!`, 'cancel');
         s.slots.partner.levels.push(card);
-        partner.state = 'stand'; partner.damage = 0; partner.faceUp = true;
         remaining = 0;
       } else {
         s.discard.push(card);
@@ -171,6 +173,7 @@ function refreshPanel() {
 function closeZonePanel() {
   if (_peekState) { closePeek(); return; }
   _openPanel = null;
+  _subCardState = null;
   document.getElementById('zone-panel').style.display = 'none';
 }
 
@@ -181,7 +184,7 @@ function isExtraCard(number) {
   const info = cardMap[number];
   if (info && info.type === 'extra') return true;
   const n = (number || '').toUpperCase();
-  return n.includes('EX') || n.endsWith('SP');
+  return n.includes('EX');
 }
 
 function populateDeckSelects() {
@@ -256,7 +259,9 @@ function render() {
     renderBackyard(p);
   }
   if (_openPanel) refreshPanel();
+  else if (_subCardState) showSubCards(_subCardState.p, _subCardState.slotName, _subCardState.type);
   else setupDragDrop();
+  initDropTargets();
 }
 
 function renderZoneTop(p, zone) {
@@ -357,6 +362,7 @@ function showZoom(card) {
 
 // --- Drag & Drop (ID-based) ---
 let dragId = null;
+document.addEventListener('dragend', () => { dragId = null; });
 
 function setupDragDrop() {
   document.querySelectorAll('.card[draggable]').forEach(el => {
@@ -366,8 +372,15 @@ function setupDragDrop() {
       e.dataTransfer.setData('text/plain', el.dataset.id);
       e.dataTransfer.effectAllowed = 'move';
     });
-    el.addEventListener('dragend', () => { el.classList.remove('dragging'); dragId = null; });
+    el.addEventListener('dragend', () => { el.classList.remove('dragging'); });
   });
+}
+
+// Drop targets: register once
+let _dropTargetsInit = false;
+function initDropTargets() {
+  if (_dropTargetsInit) return;
+  _dropTargetsInit = true;
 
   document.querySelectorAll('.slot[data-p], .ex-slot[data-p]').forEach(el => {
     el.addEventListener('dragover', e => {
@@ -501,6 +514,7 @@ function showSubCards(p, slotName, type) {
   if (!cards.length) return;
   const label = type === 'levels' ? 'レベルカード' : 'セットカード';
   _openPanel = null;
+  _subCardState = { p, slotName, type };
   const panel = document.getElementById('zone-panel');
   document.getElementById('zone-panel-title').textContent = `P${p+1} ${slotName} ${label} (${cards.length})`;
   const ct = document.getElementById('zone-panel-cards');
@@ -532,6 +546,7 @@ function peekDeck(p, n) {
 }
 
 let _peekState = null;
+let _subCardState = null; // {p, slotName, type}
 
 function showPeekPanel(p, cards) {
   const panel = document.getElementById('zone-panel');
@@ -632,6 +647,10 @@ function closePeek() {
 
 function zoneMenu(e, p, zone) {
   e.preventDefault();
+  const s = state[p]; if (!s) return;
+  showCtxMenu(e, [
+    { label: `📂 ${zone}を見る (${s[zone].length})`, fn() { game.showZone(p, zone); } },
+  ]);
 }
 
 function showCtxMenu(e, items) {
