@@ -370,7 +370,9 @@ function setupDragDrop() {
     el.addEventListener('drop', e => {
       e.preventDefault(); el.classList.remove('drag-over');
       if (!dragId) return;
-      moveTo(+el.dataset.p, el.dataset.slot);
+      const rect = el.getBoundingClientRect();
+      const dropHalf = (e.clientY - rect.top) < rect.height / 2 ? 'top' : 'bottom';
+      moveTo(+el.dataset.p, el.dataset.slot, dropHalf);
     });
   });
 
@@ -391,7 +393,7 @@ function setupDragDrop() {
   });
 }
 
-function moveTo(toP, toZone) {
+function moveTo(toP, toZone, dropHalf) {
   if (!dragId) return;
   const card = findAndRemove(dragId);
   if (!card) { dragId = null; render(); return; }
@@ -404,30 +406,20 @@ function moveTo(toP, toZone) {
     // Set card → add to sets
     if (cm.type === 'set' && slot.chara) {
       slot.sets.push(card);
-    }
-    // Same name as current chara (level up for partner) or extra over existing
-    else if (slot.chara && cm.type === 'extra') {
-      // Extra over existing: old chara becomes level card
-      slot.levels.push(slot.chara);
-      card.state = 'stand'; card.faceUp = true;
-      slot.chara = card;
-    } else if (slot.chara && slot.chara.name === card.name && toZone === 'partner') {
-      // Partner level up
-      slot.levels.push(card);
-      slot.chara.state = 'stand'; slot.chara.damage = 0; slot.chara.faceUp = true;
-    } else {
-      // パートナースロットは圧殺禁止（同名レベルアップ/エクストラ/セット以外は不可）
-      if (toZone === 'partner' && slot.chara) {
-        log('パートナーは圧殺できません');
-        ds.hand.push(card);
-      } else {
-        if (slot.chara) {
-          ds.discard.push(slot.chara, ...slot.levels, ...slot.sets);
-          slot.levels = []; slot.sets = [];
-        }
+    } else if (slot.chara) {
+      // 上半分: ユニット（新カードが上、元charaがlevelsへ）
+      if (dropHalf === 'top') {
+        slot.levels.push(slot.chara);
         card.state = 'stand'; card.faceUp = true;
         slot.chara = card;
+      } else {
+        // 下半分: レベルカードとして追加
+        slot.levels.push(card);
       }
+    } else {
+      // 空スロットに配置
+      card.state = 'stand'; card.faceUp = true;
+      slot.chara = card;
     }
   } else {
     card.state = 'stand'; card.faceUp = true;
