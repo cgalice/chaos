@@ -20,6 +20,13 @@ h1 { color: #4a9fd4; margin-bottom: 12px; font-size: 1.4em; }
 .recipe-card .partner { font-size: 13px; font-weight: bold; margin: 4px 0; }
 .recipe-card .info { font-size: 12px; }
 .recipe-card .comment { font-size: 11px; color: #6a9; margin-top: 4px; font-style: italic; }
+.flags { display: flex; gap: 3px; flex-wrap: wrap; margin-top: 4px; }
+.flag { font-size: 9px; padding: 1px 5px; border-radius: 3px; font-weight: bold; }
+.flag-incomplete { background: #5a4a00; color: #fc0; }
+.flag-over { background: #5a1a1a; color: #f66; }
+.flag-os_mix { background: #1a3a5a; color: #6bf; }
+.flag-needs_review { background: #5a2a5a; color: #e8f; }
+.flag-neo_violation { background: #5a0a0a; color: #f88; }
 .detail-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 100; overflow-y: auto; padding: 20px; }
 .detail-overlay.active { display: block; }
 .detail-content { max-width: 1200px; margin: 0 auto; background: #1e2d3d; border-radius: 8px; padding: 20px; }
@@ -107,6 +114,7 @@ function render() {
       <div class="partner">${name}</div>
       <div class="info">${r.player || ''} ${r.cards.length}種 ${r.total}枚</div>
       ${r.comment ? `<div class="comment">${r.comment}</div>` : ''}
+      ${r.flags && r.flags.length ? `<div class="flags">${r.flags.map(f => `<span class="flag flag-${f}">${f}</span>`).join('')}</div>` : ''}
     </div>`;
   }).join('');
   if (filtered.length > 200) list.innerHTML += `<div style="color:#678;padding:10px">他 ${filtered.length - 200} 件...</div>`;
@@ -132,6 +140,7 @@ function showDetail(idx, restoreScroll) {
 
   let html = `<div class="detail-header"><h2>${r.year||'?'}年 ${r.event_type} ${r.location} #${r.rank}</h2><button class="close-btn" onclick="closeDetail()">✕</button></div>`;
   html += `<p style="margin-bottom:8px;font-size:13px">パートナー: <b>${cm.name||r.partner}</b> (${r.partner})${r.player?' | '+r.player:''} | <span id="totals-display"><span style="${mainCls};font-weight:bold">メイン${mainTotal}/50</span> <span style="${exCls};font-weight:bold">EX${exTotal}/10</span></span></p>`;
+  if (r.flags && r.flags.length) html += `<div class="flags" style="margin-bottom:8px">${r.flags.map(f => `<span class="flag flag-${f}">${f}</span>`).join('')}</div>`;
   html += `<div style="display:flex;gap:12px;margin-top:8px">`;
 
   // Left: source image
